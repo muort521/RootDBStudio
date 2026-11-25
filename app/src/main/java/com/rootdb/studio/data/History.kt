@@ -192,12 +192,15 @@ object RecentStore {
         prefs(ctx).getString(KEY, "")
             ?.split('\n')
             ?.filter { it.isNotBlank() }
+            ?.map { canonicalPath(it) }
+            ?.distinct()
             ?.take(LIMIT)
             ?: emptyList()
 
     fun add(ctx: Context, path: String): List<String> {
         if (path.isBlank()) return list(ctx)
-        val next = (listOf(path) + list(ctx).filter { it != path }).take(LIMIT)
+        val p = canonicalPath(path)
+        val next = (listOf(p) + list(ctx).filter { it != p }).take(LIMIT)
         prefs(ctx).edit().putString(KEY, next.joinToString("\n")).apply()
         return next
     }
@@ -205,5 +208,23 @@ object RecentStore {
     fun clear(ctx: Context): List<String> {
         prefs(ctx).edit().remove(KEY).apply()
         return emptyList()
+    }
+}
+
+/**
+ * 统一内部存储路径：`/sdcard`、`/storage/self/primary` 都归一到 `/storage/emulated/0`。
+ *
+ * 没有 root 时 `/sdcard` 是指向应用自身挂载视图里 `/storage/self/primary` 的软链接，
+ * 普通应用即使拿到「所有文件访问权限」也常常列不出内容；`/storage/emulated/0` 则可以正常读写。
+ */
+fun canonicalPath(path: String): String {
+    val base = "/storage/emulated/0"
+    val p = path.trim().trimEnd('/')
+    return when {
+        p.isEmpty() -> "/"
+        p == "/sdcard" || p == "/storage/self/primary" -> base
+        p.startsWith("/sdcard/") -> base + p.removePrefix("/sdcard")
+        p.startsWith("/storage/self/primary/") -> base + p.removePrefix("/storage/self/primary")
+        else -> p
     }
 }

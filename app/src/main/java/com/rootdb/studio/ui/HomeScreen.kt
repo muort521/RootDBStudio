@@ -69,7 +69,7 @@ fun HomeScreen(c: AppController) {
                 CardGroup {
                     RowItem(
                         "所有文件访问权限",
-                        if (c.allFilesGranted) "已授予，可浏览 /sdcard 下任意文件" else "未授予，/sdcard 目录可能无法列出",
+                        if (c.allFilesGranted) "已授予，可浏览 /storage/emulated/0 下任意文件" else "未授予，内部存储目录可能无法列出",
                         value = if (c.allFilesGranted) "已授予" else "去授权",
                         onClick = { c.requestAllFilesAccess() },
                     )
@@ -86,7 +86,7 @@ fun HomeScreen(c: AppController) {
                     QuickRow(c, "/", "根目录（系统全部文件）", AppIcons.public)
                     QuickRow(c, "/data/data", "应用私有数据（含各 App 数据库）", AppIcons.storage)
                     QuickRow(c, "/data/system", "系统设置与账号数据库", Icons.Filled.Settings)
-                    QuickRow(c, "/sdcard", "内部存储", AppIcons.sd)
+                    QuickRow(c, "/storage/emulated/0", "内部存储（无需 root）", AppIcons.sd)
                 }
             }
             item {
@@ -191,7 +191,10 @@ fun BrowserScreen(c: AppController) {
         if (c.searchQuery.isNotEmpty()) runCatching { listState.scrollToItem(0) }
     }
 
-    val dirName = c.path.substringAfterLast('/').ifBlank { "/" }
+    val dirName = when (c.path) {
+        "/storage/emulated/0" -> "内部存储"
+        else -> c.path.substringAfterLast('/').ifBlank { "/" }
+    }
 
     Scaffold(
         topBar = {
@@ -222,7 +225,8 @@ fun BrowserScreen(c: AppController) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp),
             )
             DirSearchBar(c)
-            if (c.path != "/" && c.path.isNotEmpty()) {
+            // 内部存储根目录已经是用户视角的顶层，不再提供「上一级」
+            if (c.path != "/" && c.path.isNotEmpty() && c.path != "/storage/emulated/0") {
                 CardGroup {
                     RowItem(
                         title = "上一级",

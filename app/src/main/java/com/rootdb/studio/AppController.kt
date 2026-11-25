@@ -18,6 +18,7 @@ import com.rootdb.studio.data.RecentStore
 import com.rootdb.studio.data.RowData
 import com.rootdb.studio.data.TableInfo
 import com.rootdb.studio.data.ValueType
+import com.rootdb.studio.data.canonicalPath
 import com.rootdb.studio.root.RootShell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -108,10 +109,9 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             rooted = ok
             rootText = if (ok) {
                 "已获得 root（uid 0），可读写 /data/data 等受保护目录"
-            } else if (RootShell.lastError != null) {
-                "未获得 root：请在弹出的 root 授权框中允许本应用（${RootShell.lastError}）"
             } else {
-                "未获得 root：仅能浏览公共目录；受保护目录需 root 授权"
+                "未获得 root：仍可浏览 /storage/emulated/0；/data/data 等受保护目录需 root 授权" +
+                    (RootShell.lastError?.let { "（$it）" } ?: "")
             }
         }
     }
@@ -161,7 +161,8 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         toast("加密设置已保存：${spec.summary}")
     }
 
-    fun loadPath(target: String) {
+    fun loadPath(raw: String) {
+        val target = canonicalPath(raw)
         memoScroll()            // 离开/刷新前记住当前目录的滚动位置
         searchQuery = ""        // 换目录时清空过滤
         listing = true
@@ -218,10 +219,9 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 rooted = ok
                 rootText = if (ok) {
                     "已获得 root（uid 0），可读写 /data/data 等受保护目录"
-                } else if (RootShell.lastError != null) {
-                    "未获得 root：请在弹出的 root 授权框中允许本应用（${RootShell.lastError}）"
                 } else {
-                    "未获得 root：仅能浏览公共目录；受保护目录需 root 授权"
+                    "未获得 root：仍可浏览 /storage/emulated/0；/data/data 等受保护目录需 root 授权" +
+                        (RootShell.lastError?.let { "（$it）" } ?: "")
                 }
             }
         }
@@ -256,7 +256,8 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         }
     }
 
-    fun openDb(dbPath: String, password: String?) {
+    fun openDb(rawPath: String, password: String?) {
+        val dbPath = canonicalPath(rawPath)
         scope.launch(Dispatchers.IO) {
             busy = true
             try {

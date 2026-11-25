@@ -49,6 +49,13 @@ object RootShell {
     fun resetRootCache() {
         rootChecked = false
         rootResult = false
+        // 关掉当前会话（可能是无 root 的普通 shell），下次重新尝试 su
+        lock.lock()
+        try {
+            closeQuietly()
+        } finally {
+            lock.unlock()
+        }
     }
 
     fun quote(s: String): String = "'" + s.replace("'", "'\\''") + "'"
@@ -144,6 +151,35 @@ object RootShell {
                 }
             }
         }
+        // 完全没有 root：退回应用自身 uid 的 shell。
+        // 这样有「所有文件访问权限」时 /storage/emulated/0 等目录仍能正常列目录、读文件。
+        try {
+            val p = ProcessBuilder("sh", "-c", "sh").redirectErrorStream(true).start()
+            proc = p
+            writer = BufferedWriter(OutputStreamWriter(p.outputStream, Charsets.UTF_8))
+            reader = BufferedReader(InputStreamReader(p.inputStream, Charsets.UTF_8))
+            val probe = "__RD_PROBE__"
+            writer!!.write("echo $probe\n")
+            writer!!.flush()
+            var alive = false
+            val deadline = System.currentTimeMillis() + 6_000
+            while (System.currentTimeMillis() < deadline) {
+                if (reader!!.ready()) {
+                    val line = reader!!.readLine()
+                    if (line != null && line.trim() == probe) {
+                        alive = true
+                        break
+                    }
+                } else {
+                    if (!p.isAlive) break
+                    Thread.sleep(8)
+                }
+            }
+            if (alive) return true
+        } catch (t: Throwable) {
+            lastError = t.message ?: t.javaClass.simpleName
+        }
+        closeQuietly()
         return false
     }
 
