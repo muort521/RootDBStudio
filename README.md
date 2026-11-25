@@ -3,7 +3,7 @@
 Android 数据库浏览与编辑工具，用 Root 权限直接读写 `/data/data/<包名>/...` 等受保护目录里的 SQLite / SQLCipher 数据库，界面为 MIUIX 风格。
 
 - 包名：`com.rootdb.studio`
-- 版本：1.4（versionCode 5），历史版本变更见 [CHANGELOG.md](CHANGELOG.md)
+- 版本：1.6（versionCode 7），历史版本变更见 [CHANGELOG.md](CHANGELOG.md)
 - 目标平台：compileSdk / targetSdk = **37（Android 17）**，minSdk 26（Android 8.0）
 - 在真机一加 12（PJD110，Android 17 / SDK 37，KernelSU root）上完成安装与功能验证
 
@@ -32,7 +32,7 @@ Android 数据库浏览与编辑工具，用 Root 权限直接读写 `/data/data
 
 ## 使用步骤
 
-1. 安装 APK，打开应用，首屏会显示 Root 状态（未授权时点「重试」，在 KernelSU/Magisk 里给本应用授权）。
+1. 安装 APK，打开应用，首屏会显示 Root 状态（未授权时点「检查」重新检测，在 KernelSU/Magisk 里给本应用授权）。
 2. 如需浏览内部存储（`/storage/emulated/0`），点「所有文件访问权限」跳到系统设置授权；没有 root 也能浏览这里。
 3. 从「快捷入口」进 `/`（根目录）、`/data/data`、`/data/system`、`/storage/emulated/0`，或点首页「最近访问」里的一条记录，进入独立的「文件浏览」页；该页顶部固定着搜索框、「刷新」和「上一级」，列表滚到底或弹出输入法都不影响操作。目录内用搜索框按文件名过滤。
 4. 打开数据库时：普通 SQLite 留空密钥直接打开；SQLCipher 加密库填 32 位十六进制密钥（如微信 `EnMicroMsg.db`）。

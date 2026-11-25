@@ -40,6 +40,11 @@ class MainActivity : ComponentActivity() {
         setContent { RootDbApp() }
     }
 
+    override fun onResume() {
+        super.onResume()
+        appResumeTick.value = appResumeTick.value + 1
+    }
+
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -53,6 +58,9 @@ class MainActivity : ComponentActivity() {
 
 /** 由 intent 传入、待 UI 消费一次的目标数据库路径 */
 private val pendingOpenPath = mutableStateOf<String?>(null)
+
+/** 每次 onResume 自增，供 Compose 侧感知「回到应用」 */
+private val appResumeTick = mutableStateOf(0)
 
 @Composable
 private fun RootDbApp() {
@@ -70,6 +78,12 @@ private fun RootDbApp() {
             pendingOpenPath.value = null
             c.openDb(target, null)
         }
+    }
+
+    // 从「所有文件访问权限」等系统设置页返回时，重新读取授权状态，避免仍显示未授权
+    val resumeTick = appResumeTick.value
+    LaunchedEffect(resumeTick) {
+        if (resumeTick > 0) c.onAppResume()
     }
 
     LaunchedEffect(c.message) {

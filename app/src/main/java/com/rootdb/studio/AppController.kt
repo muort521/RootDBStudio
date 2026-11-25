@@ -108,12 +108,16 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             val ok = RootShell.hasRoot
             rooted = ok
             rootText = if (ok) {
-                "已获得 root（uid 0），可读写 /data/data 等受保护目录"
+                "可读写 /data/data 等受保护目录"
             } else {
-                "未获得 root：仍可浏览 /storage/emulated/0；/data/data 等受保护目录需 root 授权" +
-                    (RootShell.lastError?.let { "（$it）" } ?: "")
+                "仅可浏览内部存储；受保护目录需 root"
             }
         }
+    }
+
+    /** 从系统设置等外部页面回到应用时调用，重新读取权限状态 */
+    fun onAppResume() {
+        refreshAllFilesState()
     }
 
     fun refreshAllFilesState() {
@@ -218,10 +222,9 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             withContext(Dispatchers.Main) {
                 rooted = ok
                 rootText = if (ok) {
-                    "已获得 root（uid 0），可读写 /data/data 等受保护目录"
+                    "可读写 /data/data 等受保护目录"
                 } else {
-                    "未获得 root：仍可浏览 /storage/emulated/0；/data/data 等受保护目录需 root 授权" +
-                        (RootShell.lastError?.let { "（$it）" } ?: "")
+                    "仅可浏览内部存储；受保护目录需 root"
                 }
             }
         }

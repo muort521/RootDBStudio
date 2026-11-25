@@ -2,6 +2,15 @@
 
 数据库工坊（`com.rootdb.studio`）版本变更记录。版本号对应 `app/build.gradle.kts` 中的 `versionName` / `versionCode`。
 
+## 1.6 — versionCode 7
+
+- 首页 root 卡片按钮文字由「重试」改为「检查」，含义为重新检测一次 root 状态（不再暗示“发生了错误”）。
+
+## 1.5 — versionCode 6
+
+- **修复首次安装授权后仍显示未授权**：`MainActivity.onResume` 触发一次权限状态刷新，从「所有文件访问权限」设置页返回应用后，卡片立即变为「已授予」，不需要重开应用。
+- **root 提示精简**：卡片副标题从三行长文本改成一行结论——已授权「可读写 /data/data 等受保护目录」，未授权「仅可浏览内部存储；受保护目录需 root」，不再显示底层错误串。
+
 ## 1.4 — versionCode 5
 
 - **无 root 也能浏览内部存储**：Shell 在 su 全部失败时回退成应用自身 uid 的 `sh -c sh`，配合「所有文件访问权限」即可列目录、读文件，不再直接失败。`hasRoot` 仍按 `id -u` 判定，不会把普通 shell 误报为 root。

@@ -400,12 +400,12 @@ private fun RootCard(c: AppController) {
                     c.rootText,
                     fontSize = 12.sp,
                     color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    maxLines = 3,
+                    maxLines = 2,
                 )
             }
             if (!c.rooted) {
                 Spacer(Modifier.width(8.dp))
-                Button(onClick = { c.retryRoot() }) { Text("重试") }
+                Button(onClick = { c.retryRoot() }) { Text("检查") }
             }
         }
     }
