@@ -29,7 +29,7 @@ Download the APK from **Releases** and install it. Root is optional but required
 
 ## Build · 构建
 
-Requirements: JDK 21, Android SDK with `platforms;android-37`.
+Requirements: JDK 21, Android SDK with `platforms;android-37.0` (or `android-37.2`) and `build-tools;37.0.0`.
 
 ```bash
 ./gradlew :app:assembleRelease        # Windows: gradlew.bat
@@ -44,15 +44,16 @@ Release signing reads `keystore.properties` (`storeFile / storePassword / keyAli
 
 ## Release workflow · 发布流程（手动）
 
-`.github/workflows/release.yml` builds and publishes **one GitHub Release** containing the APK and the source zip. It only runs manually:
+`.github/workflows/release.yml` builds and publishes **one GitHub Release** containing only the APK. Source downloads (`Source code (zip)` / `Source code (tar.gz)`) are generated automatically by GitHub at publish time — there is no custom source zip asset. It only runs manually:
 
 Actions → **Release APK** → *Run workflow* → version, e.g. `v2.0.2`
 
 - `v2.0.2` → `versionName=2.0.2`, `versionCode=20002` (passed to Gradle, no file edits).
-- Both assets are uploaded to a **draft** release, which is published only after both uploads succeed, so the APK and source always appear at the same time and the source never precedes the APK.
+- If a Release or tag with the same version already exists, it is deleted and rebuilt first, so stale source timestamps never remain.
+- The APK is uploaded to a **draft** release and the release is published immediately afterwards; GitHub then generates the source archives, so the APK and both source downloads share the same publish time (source never precedes the APK).
 - Repository secrets required: `KEYSTORE_BASE64` (base64 of the `.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
-发布只会创建一个 Release，同时附上 APK 和源码 zip。只能手动触发：Actions → **Release APK** → Run workflow → 输入 `v2.0.2`。两个产物先传到草稿 Release，全部上传成功后才正式发布，因此二者发布时间一致、源码不会早于 APK。需要在仓库 Secrets 中配置上面 4 个签名相关变量。
+发布只会创建一个 Release，只附 APK；源码由 GitHub 在发布时自动生成 `Source code (zip)` / `Source code (tar.gz)`，不再上传自定义源码 zip。只能手动触发：Actions → **Release APK** → Run workflow → 输入 `v2.0.2`。若同版本已有 Release 或 tag，会先删除重建，避免沿用旧时间戳。APK 先传到草稿 Release，随后立刻正式发布，GitHub 在同一时刻生成源码包，因此 APK 与两个源码下载的发布时间一致、源码不会早于 APK。需要在仓库 Secrets 中配置上面 4 个签名相关变量。
 
 ## Internationalization · 多语言
 

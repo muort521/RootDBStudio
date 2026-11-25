@@ -5,7 +5,7 @@
 ## 2.0.2 — versionCode 14
 
 - 新增 `LICENSE`（MIT），README 重写为中英双语的简洁版（功能、安装、构建、发布、多语言、数据安全）。
-- 新增 GitHub Actions 发布工作流 `.github/workflows/release.yml`：只能手动触发，输入 `v2.0.2` 这样的版本号；APK 与源码包先上传到草稿 Release，两者都就位后才正式发布，保证发布时间一致、源码不会早于 APK。
+- 新增 GitHub Actions 发布工作流 `.github/workflows/release.yml`：只能手动触发，输入 `v2.0.2` 这样的版本号；Release 只附 APK，源码由 GitHub 自动生成 `Source code (zip)` / `Source code (tar.gz)`。APK 先传到草稿 Release 再立刻正式发布，同版本旧 Release/tag 会先删除重建，保证 APK 与两个源码下载发布时间一致、源码不会早于 APK。
 - 版本号可由构建参数覆盖（`-PversionName` / `-PversionCode`），CI 不再需要改动 `build.gradle.kts`。
 - 补齐 Gradle Wrapper 脚本（`gradlew` / `gradlew.bat`），CI 直接用 wrapper 构建。
 

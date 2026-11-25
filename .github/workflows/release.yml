@@ -35,7 +35,6 @@ jobs:
           echo "VERSION_NO=$NO" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))" >> "$GITHUB_ENV"
           echo "APK_NAME=RootDBStudio-${NO}-release.apk" >> "$GITHUB_ENV"
-          echo "ZIP_NAME=RootDBStudio-${NO}-source.zip" >> "$GITHUB_ENV"
           echo "版本 $V → versionName=$NO, versionCode=$((MAJOR * 10000 + MINOR * 100 + PATCH))"
 
       - name: Checkout
@@ -119,14 +118,6 @@ jobs:
             echo "::error::APK 的 versionName 与输入 $VERSION_NO 不一致"; exit 1; }
           "$ANDROID_SDK_ROOT/build-tools/37.0.0/apksigner" verify --print-certs "$APK_NAME" | head -n 5
 
-      - name: Build source archive
-        run: |
-          set -euo pipefail
-          # 用当前提交快照，排除 keystore / local.properties（它们本就不在版本库中）
-          git archive --format=zip --prefix=RootDBStudio/ -o "$ZIP_NAME" HEAD
-          unzip -l "$ZIP_NAME" | grep -E "README.md|LICENSE|CHANGELOG.md|settings.gradle.kts|app/build.gradle.kts" > /dev/null
-          echo "源码包内容校验通过：$ZIP_NAME"
-
       - name: Prepare release notes
         run: |
           set -euo pipefail
@@ -136,45 +127,48 @@ jobs:
             flag { print }
           ' CHANGELOG.md > notes.md || true
           if [ ! -s notes.md ]; then
-            printf 'RootDB Studio %s\n\nAPK 与源码包同时发布；详见 CHANGELOG.md。\n' "$VERSION_NO" > notes.md
+            printf 'RootDB Studio %s\n\n详见 CHANGELOG.md。\n' "$VERSION_NO" > notes.md
           fi
           {
             echo ""
             echo "**Assets / 附件**"
             echo "- \`$APK_NAME\` — Android 8.0+ (API 26+), targetSdk 37"
-            echo "- \`$ZIP_NAME\` — full source snapshot (Gradle wrapper included)"
+            echo "- Source code (zip) / Source code (tar.gz) — 由 GitHub 在发布时自动生成，与 APK 同一发布时间"
             echo ""
             echo "签名与之前版本一致，可直接覆盖安装。"
           } >> notes.md
-
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          gh release create "${{ inputs.version }}" \
-            --draft \
-            --target "$GITHUB_SHA" \
-            --title "RootDB Studio ${{ inputs.version }}" \
-            --notes-file notes.md
-
-      - name: Upload APK and source together
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          gh release upload "${{ inputs.version }}" "$APK_NAME" "$ZIP_NAME" --clobber
-          # 两个附件都在草稿里才允许发布，保证源码不会早于 APK 出现在页面上
-          ASSETS="$(gh release view "${{ inputs.version }}" --json assets -q '.assets[].name')"
-          echo "$ASSETS"
-          echo "$ASSETS" | grep -qx "$APK_NAME"
-          echo "$ASSETS" | grep -qx "$ZIP_NAME"
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release edit "${{ inputs.version }}" --draft=false
-          gh release view "${{ inputs.version }}" --json tagName,url,assets \
+          V="${{ inputs.version }}"
+
+          # 同一版本若已有残留 Release / tag，先彻底删除并重建：
+          # 否则 GitHub 自动源码包会沿用旧 tag 的时间戳，出现「源码比 APK 早」。
+          if gh release view "$V" >/dev/null 2>&1; then
+            echo "发现已存在的 Release $V，删除后重建"
+            gh release delete "$V" --yes --cleanup-tag || gh release delete "$V" --yes
+          fi
+          if git ls-remote --tags origin "refs/tags/$V" | grep -q .; then
+            echo "删除残留 tag $V"
+            git push origin ":refs/tags/$V" || true
+          fi
+
+          # 1) 先建草稿（此时源码包尚不对公开页面生效），2) 上传 APK，3) 立即正式发布。
+          # 发布后 GitHub 自动生成 Source code (zip/tar.gz)，时间与 APK 同批。
+          gh release create "$V" \
+            --draft \
+            --target "$GITHUB_SHA" \
+            --title "RootDB Studio $V" \
+            --notes-file notes.md
+          gh release upload "$V" "$APK_NAME" --clobber
+
+          ASSETS="$(gh release view "$V" --json assets -q '.assets[].name')"
+          echo "草稿附件：$ASSETS"
+          echo "$ASSETS" | grep -qx "$APK_NAME" || { echo "::error::APK 未上传成功"; exit 1; }
+
+          gh release edit "$V" --draft=false
+          gh release view "$V" --json tagName,url,assets \
             -q '"\(.tagName) → \(.url)\n附件：\(.assets[].name)"'
