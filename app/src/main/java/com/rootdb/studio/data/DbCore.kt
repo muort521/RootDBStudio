@@ -33,7 +33,7 @@ data class RowsPage(val columns: List<String>, val rows: List<RowData>, val tota
 
 /** 数据库打开失败：带上要展示的字符串资源与可选技术细节，由 UI 层格式化到当前语言 */
 class DbOpenException(
-    @StringRes val resId: Int,
+    @param:StringRes val resId: Int,
     val detail: String? = null,
     val needPassword: Boolean = false,
 ) : Exception(detail ?: "")

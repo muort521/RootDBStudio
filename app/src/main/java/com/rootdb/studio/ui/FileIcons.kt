@@ -1,11 +1,13 @@
 package com.rootdb.studio.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Extension
@@ -14,13 +16,11 @@ import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.Html
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Sd
 import androidx.compose.material.icons.filled.Slideshow
@@ -126,14 +126,14 @@ fun iconOfKind(kind: FileKind): ImageVector = when (kind) {
     FileKind.IMAGE -> Icons.Filled.Image
     FileKind.VIDEO -> Icons.Filled.Movie
     FileKind.AUDIO -> Icons.Filled.Audiotrack
-    FileKind.PLAYLIST -> Icons.Filled.PlaylistPlay
+    FileKind.PLAYLIST -> Icons.AutoMirrored.Filled.PlaylistPlay
     FileKind.SUBTITLE -> Icons.Filled.Subtitles
     FileKind.ARCHIVE -> Icons.Filled.FolderZip
     FileKind.APK -> Icons.Filled.Android
     FileKind.BINARY -> Icons.Filled.Memory
     FileKind.CODE -> Icons.Filled.Code
     FileKind.WEB -> Icons.Filled.Html
-    FileKind.TEXT -> Icons.Filled.Article
+    FileKind.TEXT -> Icons.AutoMirrored.Filled.Article
     FileKind.PDF -> Icons.Filled.PictureAsPdf
     FileKind.DOC -> Icons.Filled.Description
     FileKind.SHEET -> Icons.Filled.TableChart
@@ -141,7 +141,7 @@ fun iconOfKind(kind: FileKind): ImageVector = when (kind) {
     FileKind.FONT -> Icons.Filled.FontDownload
     FileKind.CERT -> Icons.Filled.Key
     FileKind.LOG -> Icons.Filled.BugReport
-    FileKind.OTHER -> Icons.Filled.InsertDriveFile
+    FileKind.OTHER -> Icons.AutoMirrored.Filled.InsertDriveFile
 }
 
 /** 类型的名称资源，同时用于图标的无障碍描述（由界面按当前语言取文案） */
@@ -188,7 +188,7 @@ object AppIcons {
     val sd = Icons.Filled.Sd
     val root = Icons.Filled.Android
     val public = Icons.Filled.Public
-    val file = Icons.Filled.InsertDriveFile
+    val file = Icons.AutoMirrored.Filled.InsertDriveFile
     val gallery = Icons.Filled.PhotoLibrary
     val audioFile = Icons.Filled.AudioFile
     val videoFile = Icons.Filled.VideoFile

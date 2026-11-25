@@ -40,7 +40,7 @@ object Hex {
     fun unb64(text: String): ByteArray = Base64.decode(text, Base64.NO_WRAP)
 }
 
-enum class Algo(@StringRes val labelRes: Int, val transformation: String, val needsIv: Boolean) {
+enum class Algo(@param:StringRes val labelRes: Int, val transformation: String, val needsIv: Boolean) {
     NONE(R.string.algo_none, "", false),
     AES_ECB(R.string.algo_aes_ecb, "AES/ECB/PKCS5Padding", false),
     AES_CBC(R.string.algo_aes_cbc, "AES/CBC/PKCS5Padding", true),
@@ -51,7 +51,7 @@ enum class Algo(@StringRes val labelRes: Int, val transformation: String, val ne
     BASE64(R.string.algo_base64, "BASE64", false),
 }
 
-enum class KeyFormat(@StringRes val labelRes: Int) {
+enum class KeyFormat(@param:StringRes val labelRes: Int) {
     TEXT(R.string.fmt_text),
     HEX(R.string.fmt_hex),
     BASE64(R.string.fmt_base64),
