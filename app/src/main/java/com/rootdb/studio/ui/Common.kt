@@ -19,6 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -150,4 +153,45 @@ fun ButtonRow(content: @Composable () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) { content() }
+}
+
+/**
+ * 把 [text] 里所有与 [query] 匹配的片段（不区分大小写、可多处）加上背景色，用于搜索高亮。
+ * 用 regionMatches 逐位比较，避免 lowercase() 改变长度导致区间错位（如土耳其语 İ/i）。
+ */
+fun highlightMatches(text: String, query: String, background: Color): AnnotatedString {
+    val q = query.trim()
+    if (q.isEmpty() || text.isEmpty() || q.length > text.length) return AnnotatedString(text)
+    return buildAnnotatedString {
+        append(text)
+        var i = 0
+        while (i <= text.length - q.length) {
+            if (text.regionMatches(i, q, 0, q.length, ignoreCase = true)) {
+                addStyle(SpanStyle(background = background), i, i + q.length)
+                i += q.length
+            } else {
+                i++
+            }
+        }
+    }
+}
+
+/**
+ * 文本过长时截一段「包含首次命中位置」的窗口，保证被搜到的片段不会落在省略号之后看不见。
+ * 不匹配时原样返回，交给界面按普通省略处理。
+ */
+fun fitAroundMatch(text: String, query: String, maxChars: Int): String {
+    val q = query.trim()
+    if (q.isEmpty() || text.length <= maxChars) return text
+    val idx = text.indexOf(q, ignoreCase = true)
+    if (idx < 0) return text
+    val limit = maxOf(maxChars, q.length + 6)
+    val lead = ((limit - q.length) / 2).coerceAtLeast(0)
+    val start = (idx - lead).coerceAtLeast(0)
+    val end = minOf(maxOf(start + limit, idx + q.length), text.length)
+    return buildString {
+        if (start > 0) append('…')
+        append(text, start, end)
+        if (end < text.length) append('…')
+    }
 }

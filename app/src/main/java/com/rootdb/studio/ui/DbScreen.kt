@@ -361,6 +361,9 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
         val thumbColor = MiuixTheme.colorScheme.primary.copy(alpha = 0.55f)
         // 表格总宽：横向滚动容器里 fillMaxWidth 会被无限约束压成 0，网格线必须显式给宽度
         val contentWidth = 78.dp + 156.dp * c.tableColumns.size
+        // 搜索命中片段高亮
+        val hlQuery = c.tableSearch
+        val hlBg = MiuixTheme.colorScheme.primary.copy(alpha = 0.28f)
 
         Box(
             Modifier.weight(1f).fillMaxWidth()
@@ -382,6 +385,8 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                                 text = row.rowid?.toString() ?: "-",
                                 width = 78.dp,
                                 color = MiuixTheme.colorScheme.onBackgroundVariant,
+                                highlight = hlQuery,
+                                highlightColor = hlBg,
                                 onClick = null,
                             )
                             row.cells.forEachIndexed { idx, cell ->
@@ -396,6 +401,8 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                                     width = 156.dp,
                                     color = if (cell.type == ValueType.NULL) MiuixTheme.colorScheme.onBackgroundVariant
                                     else MiuixTheme.colorScheme.onBackground,
+                                    highlight = hlQuery,
+                                    highlightColor = hlBg,
                                     onClick = {
                                         if (row.rowid == null) {
                                             c.toast(c.ctx.getString(R.string.table_no_rowid))
@@ -625,7 +632,14 @@ private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
 }
 
 @Composable
-private fun CellBox(text: String, width: androidx.compose.ui.unit.Dp, color: Color, onClick: (() -> Unit)?) {
+private fun CellBox(
+    text: String,
+    width: androidx.compose.ui.unit.Dp,
+    color: Color,
+    highlight: String = "",
+    highlightColor: Color = Color.Transparent,
+    onClick: (() -> Unit)?,
+) {
     val line = MiuixTheme.colorScheme.onBackgroundVariant.copy(alpha = 0.32f)
     Box(
         Modifier
@@ -637,6 +651,12 @@ private fun CellBox(text: String, width: androidx.compose.ui.unit.Dp, color: Col
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 10.dp, vertical = 11.dp),
     ) {
-        Text(text, fontSize = 12.sp, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            highlightMatches(fitAroundMatch(text, highlight, 14), highlight, highlightColor),
+            fontSize = 12.sp,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

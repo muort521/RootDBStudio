@@ -18,8 +18,8 @@ android {
         applicationId = "com.rootdb.studio"
         minSdk = 26
         targetSdk = 37
-        versionCode = 12
-        versionName = "2.0.0"
+        versionCode = 13
+        versionName = "2.0.1"
     }
 
     buildFeatures {

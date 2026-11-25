@@ -3,7 +3,7 @@
 Android 数据库浏览与编辑工具，用 Root 权限直接读写 `/data/data/<包名>/...` 等受保护目录里的 SQLite / SQLCipher 数据库，界面为 MIUIX 风格。
 
 - 包名：`com.rootdb.studio`
-- 版本：2.0.0（versionCode 12），历史版本变更见 [CHANGELOG.md](CHANGELOG.md)
+- 版本：2.0.1（versionCode 13），历史版本变更见 [CHANGELOG.md](CHANGELOG.md)
 - 界面语言：默认英文，简体中文随系统自动切换；新增语言见 `app/src/main/res/values/strings.xml` 顶部说明与 `res/xml/locales_config.xml`
 - 目标平台：compileSdk / targetSdk = **37（Android 17）**，minSdk 26（Android 8.0）
 - 在真机一加 12（PJD110，Android 17 / SDK 37，KernelSU root）上完成安装与功能验证

@@ -242,6 +242,7 @@ fun BrowserScreen(c: AppController) {
                 }
             }
             Spacer(Modifier.height(4.dp))
+            val hlBg = MiuixTheme.colorScheme.primary.copy(alpha = 0.28f)
 
             // ── 可滚动的目录内容 ──────────────────────────────
             LazyColumn(
@@ -277,7 +278,7 @@ fun BrowserScreen(c: AppController) {
                             )
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(entry.name, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(highlightMatches(fitAroundMatch(entry.name, query, 30), query, hlBg), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(
                                     buildString {
                                         if (entry.isDir) append(stringResource(R.string.browser_entry_dir)) else append(BackupStore.humanSize(entry.size))
