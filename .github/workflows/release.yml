@@ -130,42 +130,39 @@ jobs:
             printf 'RootDB Studio %s\n\n详见 CHANGELOG.md。\n' "$VERSION_NO" > notes.md
           fi
 
-      - name: Publish release
+      - name: Create tag and publish release with APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           V="${{ inputs.version }}"
-          TMP="${V}-draft-${GITHUB_RUN_ID}"
 
-          # 清理同版本残留的 Release / tag，避免沿用旧时间戳
+          # 1) 清理同版本旧 Release / tag，避免沿用旧时间戳
           if gh release view "$V" >/dev/null 2>&1; then
             echo "删除已存在的 Release $V"
             gh release delete "$V" --yes --cleanup-tag || gh release delete "$V" --yes
           fi
-          if git ls-remote --tags origin "refs/tags/$V" | grep -q .; then
-            echo "删除残留 tag $V"
-            git push origin ":refs/tags/$V" || true
-          fi
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${V}" >/dev/null 2>&1 || true
+          git tag -d "$V" >/dev/null 2>&1 || true
 
-          # 关键：草稿先用临时 tag，APK 上传完后再在“发布”这一步改回正式 tag。
-          # GitHub 是在发布时才创建 vX.Y.Z 这个 tag、并据此生成源码包，
-          # 所以 Source code (zip/tar.gz) 的时间不会早于 APK。
-          gh release create "$TMP" \
-            --draft \
-            --target "$GITHUB_SHA" \
+          # 2) 建 annotated tag（tag 自带 tagger 时间 = 现在）。
+          #    GitHub 的 Source code (zip/tar.gz) 时间取 tagger date，
+          #    轻量 tag 会退回 commit 日期，这正是之前时间差几分钟的原因。
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$V" -m "Release $V"
+          git push -f origin "refs/tags/$V"
+          echo "annotated tag $V：$(git cat-file -p "refs/tags/$V" | grep -E '^(object|tagger)')"
+
+          # 3) 等 GitHub 索引 tag，再用一条 gh release create 同时建 Release 并上传 APK，
+          #    让 APK 的 created_at 与 tag 时间落在同一时刻。
+          sleep 5
+          gh release create "$V" "$APK_NAME" \
             --title "RootDB Studio $V" \
             --notes-file notes.md
-          gh release upload "$TMP" "$APK_NAME" --clobber
-          ASSETS="$(gh release view "$TMP" --json assets -q '.assets[].name')"
-          echo "草稿附件：$ASSETS"
+
+          ASSETS="$(gh release view "$V" --json assets -q '.assets[].name')"
+          echo "Release 附件：$ASSETS"
           echo "$ASSETS" | grep -qx "$APK_NAME" || { echo "::error::APK 未上传成功"; exit 1; }
-
-          gh release edit "$TMP" --tag "$V" --target "$GITHUB_SHA" --draft=false
-
-          # 删掉临时 tag（Release 已改用正式 tag，不受影响）
-          git push origin ":refs/tags/$TMP" 2>/dev/null || true
-          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TMP}" >/dev/null 2>&1 || true
-
           gh release view "$V" --json tagName,url,assets \
             -q '"\(.tagName) → \(.url)\n附件：\(.assets[].name)"'
