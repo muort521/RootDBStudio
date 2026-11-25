@@ -17,7 +17,9 @@
 - 表格带横竖网格线、按比例显示且可拖动的横向滚动条、分页
 - 全列搜索（大表可用），命中片段高亮
 - 编辑单元格（自动 / 文本 / 整数 / 小数 / BLOB / NULL）、插行、删行、执行任意 SQL
-- 就地解密并编辑 AES / DES / 3DES / XOR / Base64 字段
+- 就地解密并编辑字段：AES（ECB/CBC/CTR/CFB/OFB/GCM）、DES（ECB/CBC）、3DES（ECB/CBC）、Blowfish、ChaCha20 / ChaCha20-Poly1305、SM4、RSA（PKCS#1 v1.5 / OAEP-SHA256）、XOR、Base64；算法与密钥按「库 + 表」分别记忆
+- 打开 SQLCipher 4 加密库，并自动兼容 SQLCipher 3.x 旧库（`cipher_compatibility=3` 回退）
+- 「加密与密钥」独立页面：字段解密配置按库+表管理（可编辑/删除/清空），整库密码用 Android Keystore 加密记忆、支持就地修改，加密库再次打开无需重输；开启解密时单元格编辑框显示明文，保存自动加密回写
 - 实时监控、备份（新建 / 导出 / 恢复 / 删除）、可撤销的历史记录
 - 所有修改先落在工作副本；「写回原库」时在源文件旁保留 `*.dbstudio.bak`
 

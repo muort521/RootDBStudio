@@ -19,8 +19,9 @@ android {
         minSdk = 26
         targetSdk = 37
         // 本地构建用默认值；CI 发布时用 -PversionName=v2.0.2 -PversionCode=20002 覆盖，避免改文件
-        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 20002
-        versionName = providers.gradleProperty("versionName").orNull ?: "2.0.2"
+        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 20100
+        versionName = providers.gradleProperty("versionName").orNull ?: "2.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -79,4 +80,8 @@ dependencies {
     implementation("top.yukonga.miuix.kmp:miuix:0.8.8")
     implementation("net.zetetic:sqlcipher-android:4.20.0")
     implementation("androidx.sqlite:sqlite:2.7.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.72")
+
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }

@@ -128,15 +128,18 @@ fun DbScreen(c: AppController) {
 @Composable
 private fun DbHomeBody(c: AppController, padding: PaddingValues) {
     Column(Modifier.fillMaxSize().padding(padding)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+        // 按屏幕宽度自动换行，标签再多也不会被挤出屏幕
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Chip(stringResource(R.string.db_tab_tables), c.tab == 0) { c.tab = 0 }
             Chip(stringResource(R.string.db_tab_monitor), c.tab == 1) { c.tab = 1 }
             Chip(stringResource(R.string.db_tab_backup), c.tab == 2) { c.tab = 2 }
             Chip(stringResource(R.string.db_tab_history), c.tab == 3) { c.tab = 3 }
+            Chip(stringResource(R.string.crypto_tab_db), false) { c.openCrypto(1) }
         }
         when (c.tab) {
             1 -> MonitorTab(c)
@@ -323,7 +326,6 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
     var editing by remember { mutableStateOf<Pair<RowData, String>?>(null) }
     var showInsert by remember { mutableStateOf(false) }
     var showSql by remember { mutableStateOf(false) }
-    var showCrypto by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<RowData?>(null) }
     var sqlResult by remember { mutableStateOf("") }
 
@@ -338,7 +340,7 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
         ) {
             Chip(stringResource(R.string.table_insert_row), false) { showInsert = true }
             Chip(stringResource(R.string.table_sql), false) { showSql = true }
-            Chip(stringResource(R.string.table_crypto), false) { showCrypto = true }
+            Chip(stringResource(R.string.table_crypto), false) { c.openCrypto(0) }
             Chip(stringResource(if (c.revealPlain) R.string.table_reveal_on else R.string.table_reveal_off), c.revealPlain) {
                 c.revealPlain = !c.revealPlain
             }
@@ -491,6 +493,7 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
             columnType = colInfo?.type?.ifBlank { "TEXT" } ?: "TEXT",
             cell = cell,
             crypto = c.crypto,
+            decryptOnOpen = showPlain,
             onSave = { input, kind, encrypt ->
                 row.rowid?.let { rid -> c.saveCell(colName, rid, cell, input, kind, encrypt) }
                 editing = null
@@ -528,17 +531,6 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
         SqlDialog(
             onRun = { sql, cb -> c.executeSql(sql, cb) },
             onDismiss = { showSql = false },
-        )
-    }
-
-    if (showCrypto) {
-        CryptoDialog(
-            initial = c.crypto,
-            onSave = { spec: CryptoSpec ->
-                c.saveCrypto(spec)
-                showCrypto = false
-            },
-            onDismiss = { showCrypto = false },
         )
     }
 }

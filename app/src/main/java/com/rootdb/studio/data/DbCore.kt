@@ -369,16 +369,33 @@ class DbSession private constructor(
             }
 
             if (!nativeLoaded) throw DbOpenException(R.string.err_sqlcipher_load)
-            val db = try {
-                net.zetetic.database.sqlcipher.SQLiteDatabase.openDatabase(
+
+            fun openCipher(compatibility: Int?): net.zetetic.database.sqlcipher.SQLiteDatabase {
+                val hook = if (compatibility == null) null else object : net.zetetic.database.sqlcipher.SQLiteDatabaseHook {
+                    override fun preKey(connection: net.zetetic.database.sqlcipher.SQLiteConnection) {
+                        // 在 PRAGMA key 之前设置兼容参数（SQLCipher 3.x 旧库）
+                        connection.execute("PRAGMA cipher_compatibility = $compatibility", emptyArray<Any>(), null)
+                    }
+
+                    override fun postKey(connection: net.zetetic.database.sqlcipher.SQLiteConnection) = Unit
+                }
+                return net.zetetic.database.sqlcipher.SQLiteDatabase.openDatabase(
                     wanted.absolutePath,
                     password,
                     null,
                     net.zetetic.database.sqlcipher.SQLiteDatabase.OPEN_READWRITE,
                     null,
+                    hook,
                 )
-            } catch (t: Throwable) {
-                throw DbOpenException(R.string.err_wrong_key_or_format, t.message ?: "")
+            }
+
+            // 先按 SQLCipher 4 默认参数打开；失败再按 3.x 兼容参数重试（老 App 的库）
+            val firstTry = runCatching { openCipher(null) }
+            val db = firstTry.getOrNull() ?: runCatching { openCipher(3) }.getOrElse {
+                throw DbOpenException(
+                    R.string.err_wrong_key_or_format,
+                    it.message ?: firstTry.exceptionOrNull()?.message ?: "",
+                )
             }
             val handle = CipherHandle(db)
             try {

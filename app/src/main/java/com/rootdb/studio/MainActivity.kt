@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rootdb.studio.ui.BrowserScreen
+import com.rootdb.studio.ui.CryptoScreen
 import com.rootdb.studio.ui.DbScreen
 import com.rootdb.studio.ui.HomeScreen
 import com.rootdb.studio.ui.PasswordDialog
@@ -97,6 +98,7 @@ private fun RootDbApp() {
         BackHandler(enabled = c.screen != Screen.Home) {
             when (c.screen) {
                 is Screen.Table -> c.backToDbHome()
+                is Screen.Crypto -> c.closeCrypto()
                 Screen.Browser -> c.backFromBrowser()
                 else -> c.closeDb()
             }
@@ -109,6 +111,7 @@ private fun RootDbApp() {
             when (c.screen) {
                 Screen.Home -> HomeScreen(c)
                 Screen.Browser -> BrowserScreen(c)
+                is Screen.Crypto -> CryptoScreen(c, (c.screen as Screen.Crypto).tab)
                 else -> DbScreen(c)
             }
 

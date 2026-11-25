@@ -11,11 +11,14 @@ import com.rootdb.studio.data.CryptoPrefs
 import com.rootdb.studio.data.CryptoSpec
 import com.rootdb.studio.data.DbOpenException
 import com.rootdb.studio.data.DbSession
+import com.rootdb.studio.data.DbKeyStore
+import com.rootdb.studio.data.SavedDbKey
 import com.rootdb.studio.data.HistoryEntry
 import com.rootdb.studio.data.HistoryStore
 import com.rootdb.studio.data.PathPrefs
 import com.rootdb.studio.data.RecentStore
 import com.rootdb.studio.data.RowData
+import com.rootdb.studio.data.SavedCrypto
 import com.rootdb.studio.data.TableInfo
 import com.rootdb.studio.data.ValueType
 import com.rootdb.studio.data.canonicalPath
@@ -31,6 +34,9 @@ sealed interface Screen {
     data object Browser : Screen
     data object DbHome : Screen
     data class Table(val name: String) : Screen
+
+    /** 独立的「加密与密钥」页面；[tab] 0=字段解密，1=数据库密钥 */
+    data class Crypto(val tab: Int) : Screen
 }
 
 class AppController(val ctx: Context, val scope: CoroutineScope) {
@@ -88,9 +94,17 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         private set
     val tableSearch: String get() = tableSearchQuery
 
-    // 加密
-    var crypto by mutableStateOf(CryptoPrefs.load(ctx))
+    // 加密（按「库 + 表」独立配置，进入表时载入）
+    var crypto by mutableStateOf(CryptoSpec())
     var revealPlain by mutableStateOf(false)
+
+    /** 已保存的表级配置，供「加密设置」里的管理列表展示 */
+    var savedCryptos by mutableStateOf<List<SavedCrypto>>(emptyList())
+        private set
+
+    /** 已保存的整库密钥（只含库路径与长度，密码本体在 Keystore 加密存储） */
+    var savedDbKeys by mutableStateOf<List<SavedDbKey>>(emptyList())
+        private set
 
     // 历史 / 备份 / 监控
     var history by mutableStateOf<List<HistoryEntry>>(emptyList())
@@ -165,8 +179,95 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
     fun saveCrypto(spec: CryptoSpec) {
         crypto = spec
-        CryptoPrefs.save(ctx, spec)
+        CryptoPrefs.save(ctx, session?.sourcePath, currentTable, spec)
+        refreshSavedCryptos()
         toast(ctx.getString(R.string.toast_crypto_saved, ctx.getString(spec.summaryRes)))
+    }
+
+    fun refreshSavedCryptos() {
+        savedCryptos = CryptoPrefs.list(ctx)
+    }
+
+    /** 删除某张表已保存的加密配置；删的就是当前表时立刻回退为「不加密」 */
+    fun deleteSavedCrypto(item: SavedCrypto) {
+        CryptoPrefs.remove(ctx, item.dbPath, item.table)
+        if (item.dbPath == session?.sourcePath && item.table == currentTable) {
+            crypto = CryptoSpec()
+        }
+        refreshSavedCryptos()
+        toast(ctx.getString(R.string.toast_crypto_deleted, item.table))
+    }
+
+    fun clearSavedCryptos() {
+        CryptoPrefs.clearAll(ctx)
+        crypto = CryptoSpec()
+        refreshSavedCryptos()
+        toast(ctx.getString(R.string.toast_crypto_cleared))
+    }
+
+    // ── 独立的「加密与密钥」页面 ──────────────────────────────────────
+    /** 打开加密页面：tab 0=字段解密（当前表），1=整库密钥 */
+    fun openCrypto(tab: Int = 0) {
+        refreshSavedCryptos()
+        refreshSavedDbKeys()
+        screen = Screen.Crypto(tab)
+    }
+
+    /** 从加密页面返回：优先回到刚才的表，否则回库首页 */
+    fun closeCrypto() {
+        val t = currentTable
+        screen = if (t != null) Screen.Table(t) else Screen.DbHome
+    }
+
+    fun refreshSavedDbKeys() {
+        savedDbKeys = DbKeyStore.list(ctx)
+    }
+
+    fun deleteSavedDbKey(item: SavedDbKey) {
+        DbKeyStore.remove(ctx, item.dbPath)
+        refreshSavedDbKeys()
+        toast(ctx.getString(R.string.toast_dbkey_deleted, item.dbName))
+    }
+
+    /**
+     * 修改某条已保存的整库密钥。
+     * 能校验就直接用新密码打开一次（打不开就不保存）；当前正打开着的库不能重开同一工作副本，
+     * 只更新记录，下次打开时生效（失效时会自动清理并提示重输）。
+     */
+    fun updateSavedDbKey(item: SavedDbKey, newPassword: String, onResult: (String?) -> Unit) {
+        val pwd = newPassword.trim()
+        if (pwd.isEmpty()) {
+            onResult(ctx.getString(R.string.crypto_db_edit_empty))
+            return
+        }
+        if (pwd == DbKeyStore.get(ctx, item.dbPath)) {
+            onResult(null)
+            return
+        }
+        scope.launch(Dispatchers.IO) {
+            val error: String? = if (session?.sourcePath == item.dbPath) {
+                null
+            } else {
+                runCatching {
+                    val probe = DbSession.open(ctx, item.dbPath, pwd, withJournal = false)
+                    probe.close()
+                }.fold({ null }, { ctx.getString(R.string.crypto_db_edit_wrong) })
+            }
+            withContext(Dispatchers.Main) {
+                if (error == null) {
+                    DbKeyStore.save(ctx, item.dbPath, pwd)
+                    refreshSavedDbKeys()
+                    toast(ctx.getString(R.string.toast_dbkey_updated, item.dbName))
+                }
+                onResult(error)
+            }
+        }
+    }
+
+    fun clearSavedDbKeys() {
+        DbKeyStore.clearAll(ctx)
+        refreshSavedDbKeys()
+        toast(ctx.getString(R.string.toast_dbkey_cleared))
     }
 
     fun loadPath(raw: String) {
@@ -264,11 +365,16 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         passwordError = null
         scope.launch(Dispatchers.IO) {
             busy = true
+            // 手输密码优先；没传密码时用该库已保存的密钥自动尝试
+            val remembered = if (password == null) DbKeyStore.get(ctx, dbPath) else null
+            val effective = password ?: remembered
             try {
                 session?.close()
-                val s = DbSession.open(ctx, dbPath, password)
+                val s = DbSession.open(ctx, dbPath, effective)
                 val t = s.tables()
+                if (password != null) DbKeyStore.save(ctx, dbPath, password)
                 withContext(Dispatchers.Main) {
+                    if (password != null) refreshSavedDbKeys()
                     session = s
                     tables = t
                     currentTable = null
@@ -276,6 +382,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     total = null
                     tableColumns = emptyList()
                     columnsInfo = emptyList()
+                    crypto = CryptoSpec()
                     screen = Screen.DbHome
                     tab = 0
                     askPasswordFor = null
@@ -283,17 +390,27 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     tableSearchQuery = ""
                     toast(
                         ctx.getString(
-                            if (s.encrypted) R.string.toast_opened_decrypted else R.string.toast_opened,
+                            when {
+                                remembered != null && password == null -> R.string.toast_opened_with_saved_key
+                                s.encrypted -> R.string.toast_opened_decrypted
+                                else -> R.string.toast_opened
+                            },
                             dbPath.substringAfterLast('/'),
                         )
                     )
                 }
             } catch (e: DbOpenException) {
                 withContext(Dispatchers.Main) {
-                    if (e.needPassword && password == null) {
+                    if (remembered != null && password == null) {
+                        // 记住的密钥已失效（库被换过密钥/文件被替换）：清掉并让用户重新输入
+                        DbKeyStore.remove(ctx, dbPath)
+                        refreshSavedDbKeys()
+                        askPasswordFor = dbPath
+                        passwordError = ctx.getString(R.string.pwd_error_saved_key_stale)
+                    } else if (e.needPassword && password == null) {
                         pendingPasswordPath = dbPath
                         passwordError = null
-                    } else if (password != null) {
+                    } else if (effective != null) {
                         // 密钥错误：错误留在对话框内部显示，对话框保持打开方便直接改密钥重试
                         if (askPasswordFor != null) askPasswordFor = dbPath else pendingPasswordPath = dbPath
                         val detail = e.detail.orEmpty()
@@ -317,7 +434,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             } catch (t: Throwable) {
                 withContext(Dispatchers.Main) {
                     val text = ctx.getString(R.string.toast_open_failed_detail, t.message.orEmpty())
-                    if (password != null) passwordError = text else toast(text)
+                    if (effective != null) passwordError = text else toast(text)
                 }
             } finally {
                 withContext(Dispatchers.Main) { busy = false }
@@ -344,6 +461,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         rows = emptyList()
         tableColumns = emptyList()
         currentTable = null
+        crypto = CryptoSpec()
         screen = Screen.Browser
         tab = 0
         // 从数据库返回浏览页时，若目录内容还没载入则补一次
@@ -370,6 +488,8 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     total = p.total
                     columnsInfo = info
                     currentTable = name
+                    // 每张表带出自己的解密设置；换表时重载，避免用上一张表的算法/密钥
+                    crypto = CryptoPrefs.load(ctx, s.sourcePath, name)
                     pageIndex = page
                     screen = Screen.Table(name)
                     tab = 0

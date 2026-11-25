@@ -183,6 +183,45 @@
     <string name="pwd_error_wrong_key">Incorrect key; this database cannot be decrypted. The file itself may also not be a database.</string>
     <string name="pwd_error_default">Open failed; check the key or the file format</string>
     <string name="toast_crypto_saved">Encryption settings saved: %1$s</string>
+    <string name="toast_crypto_deleted">Encryption settings for “%1$s” removed</string>
+    <string name="toast_crypto_cleared">All saved encryption settings cleared</string>
+    <string name="crypto_saved_title">Saved profiles (%1$d)</string>
+    <string name="crypto_saved_table">%1$s</string>
+    <string name="crypto_saved_table_current">%1$s (current table)</string>
+    <string name="crypto_saved_meta">%1$s · %2$s</string>
+    <string name="crypto_saved_delete">Delete</string>
+    <string name="crypto_saved_edit">Edit</string>
+    <string name="crypto_saved_loaded">Profile loaded — change it and tap save</string>
+    <string name="crypto_saved_loaded_other">Loaded the profile of “%1$s”; saving writes it to the current table “%2$s”</string>
+    <string name="crypto_saved_clear_all">Clear all</string>
+    <string name="crypto_saved_clear_confirm">Clear every saved profile?</string>
+    <string name="crypto_saved_clear_yes">Clear</string>
+    <string name="crypto_saved_clear_no">Cancel</string>
+    <string name="crypto_screen_title">Encryption &amp; Keys</string>
+    <string name="crypto_tab_fields">Field decryption</string>
+    <string name="crypto_tab_db">Database keys</string>
+    <string name="crypto_current_table">Current table: %1$s</string>
+    <string name="crypto_need_table">Open a table first to configure field decryption</string>
+    <string name="crypto_db_remember_title">Remember database keys</string>
+    <string name="crypto_db_remember_desc">After a database opens successfully with a password, the key is remembered so the same file opens directly next time. Passwords are encrypted with the system Keystore; only the file name and length are shown here.</string>
+    <string name="crypto_db_empty">No database keys saved yet. Open a SQLCipher database and enter its password; it will appear here automatically.</string>
+    <string name="crypto_db_saved_title">Saved database keys (%1$d)</string>
+    <string name="crypto_db_item">%1$s</string>
+    <string name="crypto_db_current_item">%1$s (current database)</string>
+    <string name="crypto_db_key_len">%1$d characters</string>
+    <string name="crypto_db_clear_confirm">Clear every saved database key?</string>
+    <string name="crypto_db_security_note">After deleting a key, that database asks for its password again. If a database password changes, the old entry is removed automatically and you are asked to re-enter it. The saved key is shown only inside the edit dialog, and only when you tap Edit.</string>
+    <string name="toast_dbkey_deleted">Database key for “%1$s” removed</string>
+    <string name="crypto_db_edit_title">Change database key</string>
+    <string name="crypto_db_edit_desc">The saved key is filled in below. Edit it as needed; it is verified before saving.</string>
+    <string name="crypto_db_edit_current_hint">The saved key is filled in below. This database is open right now, so the key can\'t be verified here; changes take effect the next time you open the file.</string>
+    <string name="crypto_db_edit_field">Database key (%1$d characters)</string>
+    <string name="crypto_db_edit_empty">Enter a key first</string>
+    <string name="crypto_db_edit_wrong">That key can\'t open this database, nothing was saved</string>
+    <string name="toast_dbkey_updated">Database key for “%1$s” updated</string>
+    <string name="toast_dbkey_cleared">All database keys cleared</string>
+    <string name="toast_opened_with_saved_key">Opened with a saved key: %1$s</string>
+    <string name="pwd_error_saved_key_stale">The saved key no longer opens this database (password may have changed). Please enter it again.</string>
 
     <!-- Dialogs -->
     <string name="dialog_open_db_title">Open database</string>
@@ -210,14 +249,17 @@
     <string name="dialog_crypto_encrypt_on_save">Encrypt on save</string>
     <string name="dialog_crypto_preview">Decrypt preview</string>
     <string name="dialog_crypto_preview_failed">Could not decrypt into readable text (the value may not be encrypted with the current algorithm)</string>
-    <string name="dialog_crypto_not_configured">No decryption algorithm configured. Pick AES / 3DES / XOR / Base64 under “Encryption” on the table page to edit encrypted fields directly.</string>
+    <string name="dialog_crypto_preview_loaded">Plaintext filled in; it will be encrypted again on save</string>
+    <string name="dialog_crypto_not_configured">No decryption algorithm configured. Pick one under “Encryption” on the table page (AES, DES/3DES, Blowfish, ChaCha20, SM4, RSA, XOR, Base64…) to edit encrypted fields directly.</string>
     <string name="dialog_delete_row">Delete row</string>
 
     <string name="crypto_dialog_title">Field decryption / encryption</string>
     <string name="crypto_dialog_summary">View and edit values stored in encrypted form</string>
     <string name="crypto_algorithm">Algorithm</string>
-    <string name="crypto_key_label">Key (AES accepts 16/24/32 bytes; other lengths are SHA-256 derived)</string>
-    <string name="crypto_iv_label">IV / Nonce (needed for CBC and GCM; derived automatically if empty)</string>
+    <string name="crypto_key_label">Key</string>
+    <string name="crypto_key_hint">AES 16/24/32 bytes; DES 8; 3DES 24; SM4 16; ChaCha20 32; RSA: PKCS#8 private or X.509 public key</string>
+    <string name="crypto_iv_label">IV / Nonce</string>
+    <string name="crypto_iv_hint">Required by CBC, CTR, CFB, OFB, GCM and ChaCha20; derived from the key if empty</string>
     <string name="crypto_payload">Ciphertext encoding</string>
     <string name="crypto_selftest">Self-test</string>
     <string name="crypto_selftest_ok">Self-test: database studio → %1$s → %2$s</string>
@@ -228,9 +270,22 @@
     <string name="algo_none">None (plaintext)</string>
     <string name="algo_aes_ecb">AES / ECB / PKCS5</string>
     <string name="algo_aes_cbc">AES / CBC / PKCS5</string>
+    <string name="algo_aes_ctr">AES / CTR / NoPadding</string>
+    <string name="algo_aes_cfb">AES / CFB / NoPadding</string>
+    <string name="algo_aes_ofb">AES / OFB / NoPadding</string>
     <string name="algo_aes_gcm">AES / GCM / NoPadding</string>
     <string name="algo_des_ecb">DES / ECB / PKCS5</string>
+    <string name="algo_des_cbc">DES / CBC / PKCS5</string>
     <string name="algo_des3_ecb">3DES / ECB / PKCS5</string>
+    <string name="algo_des3_cbc">3DES / CBC / PKCS5</string>
+    <string name="algo_blowfish_ecb">Blowfish / ECB / PKCS5</string>
+    <string name="algo_blowfish_cbc">Blowfish / CBC / PKCS5</string>
+    <string name="algo_chacha20">ChaCha20</string>
+    <string name="algo_chacha20_poly">ChaCha20-Poly1305</string>
+    <string name="algo_sm4_ecb">SM4 / ECB / PKCS5</string>
+    <string name="algo_sm4_cbc">SM4 / CBC / PKCS5</string>
+    <string name="algo_rsa_pkcs1">RSA / PKCS#1 v1.5</string>
+    <string name="algo_rsa_oaep">RSA / OAEP-SHA256</string>
     <string name="algo_base64">Base64</string>
     <string name="algo_xor">XOR (hex output)</string>
     <string name="fmt_text">Text</string>
@@ -264,3 +319,5 @@
 
     <color name="ic_launcher_background">#0E4C92</color>
 </resources>
+
+

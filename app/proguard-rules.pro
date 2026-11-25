@@ -3,3 +3,7 @@
 -keepclassmembers enum com.rootdb.studio.** {
     *;
 }
+
+# BouncyCastle 的 SM4 实现通过名称反射查找，保留整包
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**

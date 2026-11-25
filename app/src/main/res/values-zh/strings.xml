@@ -179,6 +179,45 @@
     <string name="pwd_error_wrong_key">密钥不正确，无法解密该数据库；也可能这个文件本身不是数据库。</string>
     <string name="pwd_error_default">打开失败，请检查密钥或文件格式</string>
     <string name="toast_crypto_saved">加密设置已保存：%1$s</string>
+    <string name="toast_crypto_deleted">已删除「%1$s」表的加密设置</string>
+    <string name="toast_crypto_cleared">已清空全部已保存的加密设置</string>
+    <string name="crypto_saved_title">已保存的配置（%1$d）</string>
+    <string name="crypto_saved_table">%1$s</string>
+    <string name="crypto_saved_table_current">%1$s（当前表）</string>
+    <string name="crypto_saved_meta">%1$s · %2$s</string>
+    <string name="crypto_saved_delete">删除</string>
+    <string name="crypto_saved_edit">编辑</string>
+    <string name="crypto_saved_loaded">已载入配置，修改后点保存</string>
+    <string name="crypto_saved_loaded_other">已载入「%1$s」的配置，保存会写入当前表「%2$s」</string>
+    <string name="crypto_saved_clear_all">清空全部</string>
+    <string name="crypto_saved_clear_confirm">确认清空所有已保存配置？</string>
+    <string name="crypto_saved_clear_yes">清空</string>
+    <string name="crypto_saved_clear_no">取消</string>
+    <string name="crypto_screen_title">加密与密钥</string>
+    <string name="crypto_tab_fields">字段解密</string>
+    <string name="crypto_tab_db">数据库密钥</string>
+    <string name="crypto_current_table">当前表：%1$s</string>
+    <string name="crypto_need_table">先打开一张表，再配置字段解密</string>
+    <string name="crypto_db_remember_title">记住数据库密钥</string>
+    <string name="crypto_db_remember_desc">用密码成功打开加密库后会自动记住，下次打开同一文件直接进入；密码经系统 Keystore 加密后保存，这里只显示库名和长度。</string>
+    <string name="crypto_db_empty">还没有保存任何数据库密钥。打开 SQLCipher 加密库并输入密码后会自动出现在这里。</string>
+    <string name="crypto_db_saved_title">已保存的数据库密钥（%1$d）</string>
+    <string name="crypto_db_item">%1$s</string>
+    <string name="crypto_db_current_item">%1$s（当前库）</string>
+    <string name="crypto_db_key_len">密钥长度 %1$d 位</string>
+    <string name="crypto_db_clear_confirm">确认清空所有数据库密钥？</string>
+    <string name="crypto_db_security_note">删除后下次打开该库需要重新输入密码；更换过密码的库会自动清除旧记录并提示重新输入。只有点「编辑」时，才会在对话框里显示该库已保存的密钥供修改。</string>
+    <string name="toast_dbkey_deleted">已删除「%1$s」的数据库密钥</string>
+    <string name="crypto_db_edit_title">修改数据库密钥</string>
+    <string name="crypto_db_edit_desc">已填入当前保存的密钥，可直接修改；保存前会先用它打开一次做校验。</string>
+    <string name="crypto_db_edit_current_hint">已填入当前保存的密钥，可直接修改。这个库正在打开，无法在这里校验；保存后下次打开文件时生效。</string>
+    <string name="crypto_db_edit_field">数据库密钥（%1$d 位）</string>
+    <string name="crypto_db_edit_empty">请先输入密钥</string>
+    <string name="crypto_db_edit_wrong">这个密钥打不开该库，未保存</string>
+    <string name="toast_dbkey_updated">已更新「%1$s」的数据库密钥</string>
+    <string name="toast_dbkey_cleared">已清空全部数据库密钥</string>
+    <string name="toast_opened_with_saved_key">已用保存的密钥打开：%1$s</string>
+    <string name="pwd_error_saved_key_stale">保存的密钥已无法打开该库（可能换过密码），请重新输入</string>
 
     <!-- 对话框 -->
     <string name="dialog_open_db_title">打开数据库</string>
@@ -206,14 +245,17 @@
     <string name="dialog_crypto_encrypt_on_save">保存时加密</string>
     <string name="dialog_crypto_preview">解密预览</string>
     <string name="dialog_crypto_preview_failed">未能解出可读明文（该值可能未按当前算法加密）</string>
-    <string name="dialog_crypto_not_configured">未配置解密算法。可在表页“加密设置”里选择 AES / 3DES / XOR / Base64 等，支持直接编辑加密字段。</string>
+    <string name="dialog_crypto_preview_loaded">已填入明文，保存时会重新加密</string>
+    <string name="dialog_crypto_not_configured">未配置解密算法。可在表页“加密设置”里选择 AES、DES/3DES、Blowfish、ChaCha20、SM4、RSA、XOR、Base64 等，支持直接编辑加密字段。</string>
     <string name="dialog_delete_row">删除该行</string>
 
     <string name="crypto_dialog_title">字段解密 / 加密设置</string>
     <string name="crypto_dialog_summary">用于直接查看与编辑加密存储的记录</string>
     <string name="crypto_algorithm">算法</string>
-    <string name="crypto_key_label">密钥（AES 支持 16/24/32 字节，其它长度自动 SHA-256 派生）</string>
-    <string name="crypto_iv_label">IV / Nonce（CBC、GCM 需要；留空自动派生）</string>
+    <string name="crypto_key_label">密钥</string>
+    <string name="crypto_key_hint">AES 16/24/32 字节；DES 8；3DES 24；SM4 16；ChaCha20 32；RSA 填 PKCS#8 私钥或 X.509 公钥</string>
+    <string name="crypto_iv_label">IV / Nonce</string>
+    <string name="crypto_iv_hint">CBC、CTR、CFB、OFB、GCM、ChaCha20 需要；留空时由密钥派生</string>
     <string name="crypto_payload">密文编码</string>
     <string name="crypto_selftest">自检</string>
     <string name="crypto_selftest_ok">自检：database studio → %1$s → %2$s</string>
@@ -224,9 +266,22 @@
     <string name="algo_none">不加密（明文）</string>
     <string name="algo_aes_ecb">AES / ECB / PKCS5</string>
     <string name="algo_aes_cbc">AES / CBC / PKCS5</string>
+    <string name="algo_aes_ctr">AES / CTR / NoPadding</string>
+    <string name="algo_aes_cfb">AES / CFB / NoPadding</string>
+    <string name="algo_aes_ofb">AES / OFB / NoPadding</string>
     <string name="algo_aes_gcm">AES / GCM / NoPadding</string>
     <string name="algo_des_ecb">DES / ECB / PKCS5</string>
+    <string name="algo_des_cbc">DES / CBC / PKCS5</string>
     <string name="algo_des3_ecb">3DES / ECB / PKCS5</string>
+    <string name="algo_des3_cbc">3DES / CBC / PKCS5</string>
+    <string name="algo_blowfish_ecb">Blowfish / ECB / PKCS5</string>
+    <string name="algo_blowfish_cbc">Blowfish / CBC / PKCS5</string>
+    <string name="algo_chacha20">ChaCha20</string>
+    <string name="algo_chacha20_poly">ChaCha20-Poly1305</string>
+    <string name="algo_sm4_ecb">SM4 / ECB / PKCS5</string>
+    <string name="algo_sm4_cbc">SM4 / CBC / PKCS5</string>
+    <string name="algo_rsa_pkcs1">RSA / PKCS#1 v1.5</string>
+    <string name="algo_rsa_oaep">RSA / OAEP-SHA256</string>
     <string name="algo_base64">Base64 编码</string>
     <string name="algo_xor">XOR 异或（输出十六进制）</string>
     <string name="fmt_text">文本</string>
@@ -260,3 +315,6 @@
 
     <color name="ic_launcher_background">#0E4C92</color>
 </resources>
+
+
+

@@ -22,12 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.rootdb.studio.EditKind
-import com.rootdb.studio.data.Algo
 import com.rootdb.studio.data.Cell
 import com.rootdb.studio.data.ColumnInfo
 import com.rootdb.studio.data.CryptoEngine
 import com.rootdb.studio.data.CryptoSpec
-import com.rootdb.studio.data.KeyFormat
 import com.rootdb.studio.data.ValueType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -208,20 +206,28 @@ fun CellEditorDialog(
     columnType: String,
     cell: Cell,
     crypto: CryptoSpec,
+    decryptOnOpen: Boolean = false,
     onSave: (String, EditKind, Boolean) -> Unit,
     onDelete: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
-    var input by remember {
+    val cipherText = cell.text ?: ""
+    // 表格上已经按明文显示时，编辑框也直接给明文，保存时再加密写回，避免「看到明文、改的却是密文」
+    val openedPlain = remember(cell) {
+        if (decryptOnOpen && crypto.enabled && cipherText.isNotBlank()) {
+            CryptoEngine.decryptTextOrNull(crypto, cipherText)
+        } else null
+    }
+    var input by remember(cell) {
         mutableStateOf(
-            when (cell.type) {
+            if (openedPlain != null) openedPlain else when (cell.type) {
                 ValueType.BLOB -> cell.blob?.let { "BLOB " + com.rootdb.studio.data.Hex.encode(it) } ?: ""
                 ValueType.NULL -> ""
                 else -> cell.text ?: ""
             }
         )
     }
-    var kind by remember {
+    var kind by remember(cell) {
         mutableStateOf(
             when (cell.type) {
                 ValueType.INTEGER -> EditKind.INTEGER
@@ -231,12 +237,12 @@ fun CellEditorDialog(
             }
         )
     }
-    var encrypt by remember { mutableStateOf(false) }
-    var preview by remember { mutableStateOf<String?>(null) }
+    var encrypt by remember(cell) { mutableStateOf(openedPlain != null) }
+    var preview by remember(cell) { mutableStateOf<String?>(null) }
 
     RdDialog(
         title = stringResource(R.string.dialog_edit_column_title, columnName),
-        summary = stringResource(R.string.dialog_edit_column_summary, columnType, cell.display.take(80)),
+        summary = stringResource(R.string.dialog_edit_column_summary, columnType, (openedPlain ?: cell.display).take(80)),
         onDismiss = onDismiss,
     ) {
         Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
@@ -273,13 +279,27 @@ fun CellEditorDialog(
                 )
                 Spacer(Modifier.height(6.dp))
                 val previewFail = stringResource(R.string.dialog_crypto_preview_failed)
+                val previewLoaded = stringResource(R.string.dialog_crypto_preview_loaded)
                 Row {
-                    Chip(stringResource(R.string.dialog_crypto_keep_cipher), !encrypt) { encrypt = false }
+                    Chip(stringResource(R.string.dialog_crypto_keep_cipher), !encrypt) {
+                        // 切回「保持密文」时把输入框还原成原始密文，避免把明文直接写进库里
+                        encrypt = false
+                        if (openedPlain != null || preview == previewLoaded) input = cipherText
+                        preview = null
+                    }
                     Spacer(Modifier.width(6.dp))
                     Chip(stringResource(R.string.dialog_crypto_encrypt_on_save), encrypt) { encrypt = true }
                     Spacer(Modifier.width(6.dp))
                     Chip(stringResource(R.string.dialog_crypto_preview), false) {
-                        preview = CryptoEngine.decryptTextOrNull(crypto, cell.display) ?: previewFail
+                        // 预览不只是显示一下：把明文直接填进输入框，并把保存方式切到「加密后保存」
+                        val plain = CryptoEngine.decryptTextOrNull(crypto, cipherText)
+                        if (plain != null) {
+                            input = plain
+                            encrypt = true
+                            preview = previewLoaded
+                        } else {
+                            preview = previewFail
+                        }
                     }
                 }
                 if (preview != null) {
@@ -304,104 +324,6 @@ fun CellEditorDialog(
             }
             Button(onClick = { onSave(input, kind, encrypt) }, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.action_save))
-            }
-        }
-    }
-}
-
-@Composable
-fun CryptoDialog(
-    initial: CryptoSpec,
-    onSave: (CryptoSpec) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var algo by remember { mutableStateOf(initial.algo) }
-    var key by remember { mutableStateOf(initial.key) }
-    var keyFormat by remember { mutableStateOf(initial.keyFormat) }
-    var iv by remember { mutableStateOf(initial.iv) }
-    var ivFormat by remember { mutableStateOf(initial.ivFormat) }
-    var payload by remember { mutableStateOf(if (initial.payload == KeyFormat.TEXT) KeyFormat.BASE64 else initial.payload) }
-    var test by remember { mutableStateOf<String?>(null) }
-
-    RdDialog(
-        title = stringResource(R.string.crypto_dialog_title),
-        summary = stringResource(R.string.crypto_dialog_summary),
-        onDismiss = onDismiss,
-    ) {
-        Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
-            Text(
-                stringResource(R.string.crypto_algorithm),
-                fontSize = 12.sp,
-                color = MiuixTheme.colorScheme.onBackgroundVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Algo.entries.forEach { a ->
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    ) {
-                        Chip(stringResource(a.labelRes), algo == a) { algo = a }
-                    }
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            TextField(
-                value = key,
-                onValueChange = { key = it },
-                label = stringResource(R.string.crypto_key_label),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                KeyFormat.entries.forEach { f ->
-                    Chip(stringResource(f.labelRes), keyFormat == f) { keyFormat = f }
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            TextField(
-                value = iv,
-                onValueChange = { iv = it },
-                label = stringResource(R.string.crypto_iv_label),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                KeyFormat.entries.forEach { f ->
-                    Chip(stringResource(f.labelRes), ivFormat == f) { ivFormat = f }
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(R.string.crypto_payload),
-                fontSize = 12.sp,
-                color = MiuixTheme.colorScheme.onBackgroundVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Chip(stringResource(R.string.fmt_base64), payload == KeyFormat.BASE64) { payload = KeyFormat.BASE64 }
-                Chip(stringResource(R.string.fmt_hex), payload == KeyFormat.HEX) { payload = KeyFormat.HEX }
-            }
-            Spacer(Modifier.height(10.dp))
-            val selftestOk = stringResource(R.string.crypto_selftest_ok)
-            val selftestFailed = stringResource(R.string.crypto_selftest_failed)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    val spec = CryptoSpec(algo, key, keyFormat, iv, ivFormat, payload)
-                    test = runCatching {
-                        val enc = CryptoEngine.encrypt(spec, "database studio")
-                        selftestOk.format(enc, CryptoEngine.decrypt(spec, enc))
-                    }.getOrElse { selftestFailed.format(it.message.orEmpty()) }
-                }) { Text(stringResource(R.string.crypto_selftest)) }
-                Button(onClick = {
-                    onSave(CryptoSpec(algo, key, keyFormat, iv, ivFormat, payload))
-                }) { Text(stringResource(R.string.crypto_save_settings)) }
-            }
-            if (test != null) {
-                Spacer(Modifier.height(6.dp))
-                Text(test!!, fontSize = 11.sp, color = MiuixTheme.colorScheme.onBackgroundVariant)
             }
         }
     }
