@@ -355,7 +355,10 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
         val scope = rememberCoroutineScope()
         var viewportPx by remember { mutableFloatStateOf(0f) }
         val trackColor = MiuixTheme.colorScheme.dividerLine
+        val gridColor = MiuixTheme.colorScheme.onBackgroundVariant.copy(alpha = 0.32f)
         val thumbColor = MiuixTheme.colorScheme.primary.copy(alpha = 0.55f)
+        // 表格总宽：横向滚动容器里 fillMaxWidth 会被无限约束压成 0，网格线必须显式给宽度
+        val contentWidth = 78.dp + 156.dp * c.tableColumns.size
 
         Box(
             Modifier.weight(1f).fillMaxWidth()
@@ -369,7 +372,7 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                     HeaderCell("rowid", 78.dp)
                     c.tableColumns.forEach { col -> HeaderCell(col, 156.dp) }
                 }
-                Box(Modifier.fillMaxWidth().height(0.8.dp).background(trackColor))
+                Box(Modifier.width(contentWidth).height(1.dp).background(gridColor))
                 LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                     items(c.rows) { row ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -402,8 +405,8 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                             }
                         }
                         Box(
-                            Modifier.fillMaxWidth().height(0.6.dp)
-                                .background(trackColor),
+                            Modifier.width(contentWidth).height(0.8.dp)
+                                .background(gridColor),
                         )
                     }
                     if (c.rows.isEmpty()) item { EmptyHint("该表没有数据或当前页为空") }
@@ -603,7 +606,7 @@ private fun TableSearchBar(query: String, matched: Long?, onSearch: (String) -> 
 
 @Composable
 private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
-    val line = MiuixTheme.colorScheme.dividerLine
+    val line = MiuixTheme.colorScheme.onBackgroundVariant.copy(alpha = 0.32f)
     Box(
         Modifier
             .width(width)
@@ -619,7 +622,7 @@ private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
 
 @Composable
 private fun CellBox(text: String, width: androidx.compose.ui.unit.Dp, color: Color, onClick: (() -> Unit)?) {
-    val line = MiuixTheme.colorScheme.dividerLine
+    val line = MiuixTheme.colorScheme.onBackgroundVariant.copy(alpha = 0.32f)
     Box(
         Modifier
             .width(width)
