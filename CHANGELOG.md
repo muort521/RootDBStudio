@@ -2,6 +2,13 @@
 
 数据库工坊（`com.rootdb.studio`）版本变更记录。版本号对应 `app/build.gradle.kts` 中的 `versionName` / `versionCode`。
 
+## 2.0.2 — versionCode 14
+
+- 新增 `LICENSE`（MIT），README 重写为中英双语的简洁版（功能、安装、构建、发布、多语言、数据安全）。
+- 新增 GitHub Actions 发布工作流 `.github/workflows/release.yml`：只能手动触发，输入 `v2.0.2` 这样的版本号；APK 与源码包先上传到草稿 Release，两者都就位后才正式发布，保证发布时间一致、源码不会早于 APK。
+- 版本号可由构建参数覆盖（`-PversionName` / `-PversionCode`），CI 不再需要改动 `build.gradle.kts`。
+- 补齐 Gradle Wrapper 脚本（`gradlew` / `gradlew.bat`），CI 直接用 wrapper 构建。
+
 ## 2.0.1 — versionCode 13
 
 - **搜索结果高亮**：表格搜索命中的片段在单元格内加底色标出（不分大小写、一行多处都会高亮）；文件目录搜索同样把文件名里命中的片段高亮。

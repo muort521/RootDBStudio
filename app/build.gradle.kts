@@ -18,8 +18,9 @@ android {
         applicationId = "com.rootdb.studio"
         minSdk = 26
         targetSdk = 37
-        versionCode = 13
-        versionName = "2.0.1"
+        // 本地构建用默认值；CI 发布时用 -PversionName=v2.0.2 -PversionCode=20002 覆盖，避免改文件
+        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 14
+        versionName = providers.gradleProperty("versionName").orNull ?: "2.0.2"
     }
 
     buildFeatures {
