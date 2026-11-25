@@ -117,17 +117,26 @@ class DbSession private constructor(
         null
     }
 
-    /** 读取一页数据；rowid 表会额外带上 rowid 便于精确修改 */
-    fun page(table: String, offset: Int, limit: Int): RowsPage {
+    /** 读取一页数据；rowid 表会额外带上 rowid 便于精确修改；filter 非空时按所有非 BLOB 列模糊匹配 */
+    fun page(table: String, offset: Int, limit: Int, filter: String? = null): RowsPage {
+        val keyword = filter?.trim().orEmpty()
+        val cols = if (keyword.isEmpty()) emptyList() else columns(table)
+            .filterNot { it.type.contains("BLOB", ignoreCase = true) }
+        val where = if (cols.isEmpty()) "" else
+            "WHERE (" + cols.joinToString(" OR ") { "lower(CAST(${q(it.name)} AS TEXT)) LIKE ? ESCAPE '\\'" } + ")"
+        val args = if (cols.isEmpty()) null else {
+            val esc = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            Array(cols.size) { "%${esc.lowercase()}%" }
+        }
         var useRowid = true
         var cursor: Cursor? = null
-        var sql = "SELECT rowid AS __rid__, * FROM ${q(table)} LIMIT $limit OFFSET $offset"
+        var sql = "SELECT rowid AS __rid__, * FROM ${q(table)} $where LIMIT $limit OFFSET $offset"
         try {
-            cursor = handle.rawQuery(sql, null)
+            cursor = handle.rawQuery(sql, args)
         } catch (t: Throwable) {
             useRowid = false
-            sql = "SELECT * FROM ${q(table)} LIMIT $limit OFFSET $offset"
-            cursor = handle.rawQuery(sql, null)
+            sql = "SELECT * FROM ${q(table)} $where LIMIT $limit OFFSET $offset"
+            cursor = handle.rawQuery(sql, args)
         }
         val columns = ArrayList<String>()
         val rows = ArrayList<RowData>()
@@ -143,7 +152,15 @@ class DbSession private constructor(
                 rows.add(RowData(rowid, cells))
             }
         }
-        return RowsPage(columns, rows, count(table))
+        return RowsPage(columns, rows, countFiltered(table, where, args))
+    }
+
+    private fun countFiltered(table: String, where: String, args: Array<String>?): Long? = try {
+        handle.rawQuery("SELECT COUNT(*) FROM ${q(table)} $where", args).use { c ->
+            if (c.moveToFirst()) c.getLong(0) else null
+        }
+    } catch (t: Throwable) {
+        null
     }
 
     private fun readCell(c: Cursor, index: Int): Cell {

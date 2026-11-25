@@ -1,11 +1,15 @@
 package com.rootdb.studio.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,17 +23,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,12 +58,18 @@ import com.rootdb.studio.data.RowData
 import com.rootdb.studio.data.ValueType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.basic.Search
+import top.yukonga.miuix.kmp.icon.basic.SearchCleanup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -142,7 +164,7 @@ private fun TablesTab(c: AppController) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
                 insideMargin = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                onClick = { c.loadTable(t.name, 0) },
+                onClick = { c.openTable(t.name) },
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -306,10 +328,11 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
     val showPlain = c.revealPlain && c.crypto.enabled
 
     Column(Modifier.fillMaxSize().padding(padding)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Chip("新增行", false) { showInsert = true }
             Chip("SQL", false) { showSql = true }
@@ -321,8 +344,23 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
             Chip("备份", false) { c.createBackup() }
         }
 
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            val hs = rememberScrollState()
+        TableSearchBar(
+            query = c.tableSearch,
+            matched = c.total,
+            onSearch = { c.setTableSearch(it) },
+        )
+
+        // 表格横向滚动：标准滚动容器（带惯性），底部是可拖动的位置条
+        val hs = rememberScrollState()
+        val scope = rememberCoroutineScope()
+        var viewportPx by remember { mutableFloatStateOf(0f) }
+        val trackColor = MiuixTheme.colorScheme.dividerLine
+        val thumbColor = MiuixTheme.colorScheme.primary.copy(alpha = 0.55f)
+
+        Box(
+            Modifier.weight(1f).fillMaxWidth()
+                .onSizeChanged { viewportPx = it.width.toFloat() },
+        ) {
             Column(Modifier.fillMaxSize().horizontalScroll(hs)) {
                 Row(
                     Modifier.background(MiuixTheme.colorScheme.secondaryContainer),
@@ -331,7 +369,8 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                     HeaderCell("rowid", 78.dp)
                     c.tableColumns.forEach { col -> HeaderCell(col, 156.dp) }
                 }
-                LazyColumn(Modifier.weight(1f)) {
+                Box(Modifier.fillMaxWidth().height(0.8.dp).background(trackColor))
+                LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                     items(c.rows) { row ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             CellBox(
@@ -364,11 +403,54 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                         }
                         Box(
                             Modifier.fillMaxWidth().height(0.6.dp)
-                                .background(MiuixTheme.colorScheme.dividerLine),
+                                .background(trackColor),
+                        )
+                    }
+                    if (c.rows.isEmpty()) item { EmptyHint("该表没有数据或当前页为空") }
+                }
+            }
+            val maxScroll = hs.maxValue
+            if (maxScroll > 0 && viewportPx > 0f) {
+                Box(
+                    Modifier.align(Alignment.BottomCenter)
+                        .fillMaxWidth().height(16.dp)
+                        .pointerInput(maxScroll, viewportPx) {
+                            if (maxScroll <= 0 || viewportPx <= 0f) return@pointerInput
+                            val w = size.width.toFloat()
+                            val thumbW = (w * viewportPx / (viewportPx + maxScroll)).coerceAtLeast(28f)
+                            val usable = (w - thumbW).coerceAtLeast(1f)
+                            fun target(x: Float): Float =
+                                ((x - thumbW / 2f) / usable).coerceIn(0f, 1f) * maxScroll
+                            detectDragGestures(
+                                onDragStart = { pos -> scope.launch { hs.scrollTo(target(pos.x).toInt()) } },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    scope.launch { hs.scrollTo(target(change.position.x).toInt()) }
+                                },
+                            )
+                        },
+                ) {
+                    Canvas(Modifier.fillMaxSize()) {
+                        val cy = size.height / 2f
+                        val barH = 3.dp.toPx()
+                        drawRoundRect(
+                            color = trackColor,
+                            topLeft = Offset(0f, cy - barH / 2f),
+                            size = Size(size.width, barH),
+                            cornerRadius = CornerRadius(barH / 2, barH / 2),
+                        )
+                        val frac = (viewportPx / (viewportPx + maxScroll)).coerceIn(0.05f, 1f)
+                        val thumbW = (size.width * frac).coerceAtLeast(28f)
+                        val usable = (size.width - thumbW).coerceAtLeast(1f)
+                        val x = usable * (hs.value.toFloat() / maxScroll.toFloat())
+                        drawRoundRect(
+                            color = thumbColor,
+                            topLeft = Offset(x, cy - barH / 2f),
+                            size = Size(thumbW, barH),
+                            cornerRadius = CornerRadius(barH / 2, barH / 2),
                         )
                     }
                 }
-                if (c.rows.isEmpty()) EmptyHint("该表没有数据或当前页为空")
             }
         }
 
@@ -450,9 +532,86 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
 }
 
 @Composable
+private fun TableSearchBar(query: String, matched: Long?, onSearch: (String) -> Unit) {
+    var text by remember { mutableStateOf(query) }
+    // 外部（如撤销/刷新）改了关键字时同步回输入框
+    LaunchedEffect(query) { if (text.trim() != query.trim()) text = query }
+    // 输入停顿后再查，几千上万行也不至于每个按键都扫一遍
+    LaunchedEffect(text) {
+        delay(450)
+        if (text.trim() != query.trim()) onSearch(text)
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
+        insideMargin = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        onClick = null,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = MiuixIcons.Basic.Search,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = MiuixTheme.colorScheme.onBackgroundVariant,
+            )
+            Spacer(Modifier.width(10.dp))
+            Box(Modifier.weight(1f)) {
+                if (text.isEmpty()) {
+                    Text(
+                        "在整个表中搜索（所有列模糊匹配）",
+                        fontSize = 13.sp,
+                        color = MiuixTheme.colorScheme.onBackgroundVariant,
+                    )
+                }
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = MiuixTheme.textStyles.main.copy(
+                        fontSize = 13.sp,
+                        color = MiuixTheme.colorScheme.onBackground,
+                    ),
+                    cursorBrush = SolidColor(MiuixTheme.colorScheme.primary),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { onSearch(text) }),
+                )
+            }
+            if (text.isNotEmpty()) {
+                Spacer(Modifier.width(6.dp))
+                IconButton(
+                    onClick = { text = ""; onSearch("") },
+                    minWidth = 24.dp,
+                    minHeight = 24.dp,
+                ) {
+                    Icon(
+                        imageVector = MiuixIcons.Basic.SearchCleanup,
+                        contentDescription = "清空搜索",
+                        modifier = Modifier.size(16.dp),
+                        tint = MiuixTheme.colorScheme.onBackgroundVariant,
+                    )
+                }
+            } else if (query.isNotEmpty() && matched != null) {
+                Text(
+                    "$matched 行",
+                    fontSize = 11.sp,
+                    color = MiuixTheme.colorScheme.onBackgroundVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
+    val line = MiuixTheme.colorScheme.dividerLine
     Box(
-        Modifier.width(width).padding(horizontal = 10.dp, vertical = 10.dp),
+        Modifier
+            .width(width)
+            .drawBehind {
+                val x = size.width - 0.6.dp.toPx()
+                drawLine(line, Offset(x, 0f), Offset(x, size.height), 0.6.dp.toPx())
+            }
+            .padding(horizontal = 10.dp, vertical = 10.dp),
     ) {
         Text(text, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
@@ -460,9 +619,14 @@ private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
 
 @Composable
 private fun CellBox(text: String, width: androidx.compose.ui.unit.Dp, color: Color, onClick: (() -> Unit)?) {
+    val line = MiuixTheme.colorScheme.dividerLine
     Box(
         Modifier
             .width(width)
+            .drawBehind {
+                val x = size.width - 0.6.dp.toPx()
+                drawLine(line, Offset(x, 0f), Offset(x, size.height), 0.6.dp.toPx())
+            }
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 10.dp, vertical = 11.dp),
     ) {

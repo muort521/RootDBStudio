@@ -83,6 +83,11 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
     var total by mutableStateOf<Long?>(null)
     var pageIndex by mutableStateOf(0)
 
+    /** 当前表的搜索关键字（对全部非 BLOB 列模糊匹配，分页也按匹配结果） */
+    var tableSearchQuery by mutableStateOf("")
+        private set
+    val tableSearch: String get() = tableSearchQuery
+
     // 加密
     var crypto by mutableStateOf(CryptoPrefs.load(ctx))
     var revealPlain by mutableStateOf(false)
@@ -283,6 +288,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     tab = 0
                     askPasswordFor = null
                     pendingPasswordPath = null
+                    tableSearchQuery = ""
                     toast(if (s.encrypted) "已解密打开：${dbPath.substringAfterLast('/')}" else "已打开：${dbPath.substringAfterLast('/')}")
                 }
             } catch (e: DbOpenException) {
@@ -335,10 +341,11 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
     fun loadTable(name: String, page: Int = 0) {
         val s = session ?: return
+        val filter = tableSearch
         scope.launch(Dispatchers.IO) {
             busy = true
             try {
-                val p = s.page(name, page * PAGE_SIZE, PAGE_SIZE)
+                val p = s.page(name, page * PAGE_SIZE, PAGE_SIZE, filter)
                 val info = s.columns(name)
                 withContext(Dispatchers.Main) {
                     tableColumns = p.columns
@@ -369,6 +376,20 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         val t = currentTable ?: return
         if (pageIndex <= 0) return
         loadTable(t, pageIndex - 1)
+    }
+
+    /** 打开某张表：清掉上张表的搜索词，再读第一页 */
+    fun openTable(name: String) {
+        tableSearchQuery = ""
+        loadTable(name, 0)
+    }
+
+    /** 表格内搜索：关键字变化后从第一页重新查（空串即恢复全表） */
+    fun setTableSearch(keyword: String) {
+        val q = keyword.trim()
+        if (q == tableSearchQuery) return
+        tableSearchQuery = q
+        currentTable?.let { loadTable(it, 0) }
     }
 
     fun typedValueFor(input: String, kind: EditKind, original: Cell): Any? {
