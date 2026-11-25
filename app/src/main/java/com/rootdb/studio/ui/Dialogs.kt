@@ -115,6 +115,8 @@ fun PasswordDialog(
     path: String,
     onOpen: (String?) -> Unit,
     onDismiss: () -> Unit,
+    error: String? = null,
+    onEdit: () -> Unit = {},
 ) {
     var password by remember { mutableStateOf("") }
     RdDialog(
@@ -130,11 +132,22 @@ fun PasswordDialog(
         Spacer(Modifier.height(10.dp))
         TextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                onEdit()
+            },
             label = "SQLCipher 密钥（留空则按明文打开）",
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        if (!error.isNullOrBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                error,
+                fontSize = 13.sp,
+                color = MiuixTheme.colorScheme.error,
+            )
+        }
         DialogButtons(
             confirmText = "打开",
             onConfirm = { onOpen(password.ifBlank { null }) },

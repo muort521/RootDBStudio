@@ -258,6 +258,12 @@ class DbSession private constructor(
 
         fun cacheDir(ctx: Context): File = File(ctx.cacheDir, "dbwork").apply { mkdirs() }
 
+        /** 清空工作副本缓存（`cache/dbwork` 下的全部内容），不影响已打开的会话 */
+        fun clearCache(ctx: Context) {
+            val dir = cacheDir(ctx)
+            dir.listFiles()?.forEach { runCatching { it.deleteRecursively() } }
+        }
+
         fun safeName(path: String): String {
             val base = path.substringAfterLast('/')
             val hash = Integer.toHexString(path.hashCode())

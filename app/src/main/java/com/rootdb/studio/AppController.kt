@@ -72,6 +72,9 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
     var askPasswordFor by mutableStateOf<String?>(null)
     var pendingPasswordPath by mutableStateOf<String?>(null)
 
+    /** 密钥错误等打开失败原因，显示在密码对话框内部（避免被对话框/输入法挡住） */
+    var passwordError by mutableStateOf<String?>(null)
+
     // 表
     var currentTable by mutableStateOf<String?>(null)
     var columnsInfo by mutableStateOf<List<ColumnInfo>>(emptyList())
@@ -261,6 +264,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
     fun openDb(rawPath: String, password: String?) {
         val dbPath = canonicalPath(rawPath)
+        passwordError = null
         scope.launch(Dispatchers.IO) {
             busy = true
             try {
@@ -285,14 +289,25 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 withContext(Dispatchers.Main) {
                     if (e.needPassword && password == null) {
                         pendingPasswordPath = dbPath
-                        askPasswordFor = null
-                        toast("该数据库可能已加密，请输入 SQLCipher 密钥")
+                        passwordError = null
+                    } else if (password != null) {
+                        // 密钥错误：错误留在对话框内部显示，对话框保持打开方便直接改密钥重试
+                        if (askPasswordFor != null) askPasswordFor = dbPath else pendingPasswordPath = dbPath
+                        val raw = e.message.orEmpty()
+                        passwordError = if (raw.contains("not a database") || raw.contains("encrypted", true)) {
+                            "密钥不正确，无法解密该数据库；也可能这个文件本身不是数据库。"
+                        } else {
+                            raw.ifBlank { "打开失败，请检查密钥或文件格式" }
+                        }
                     } else {
                         toast(e.message ?: "打开失败")
                     }
                 }
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) { toast("打开失败：${t.message}") }
+                withContext(Dispatchers.Main) {
+                    if (password != null) passwordError = "打开失败：${t.message}"
+                    else toast("打开失败：${t.message}")
+                }
             } finally {
                 withContext(Dispatchers.Main) { busy = false }
             }
@@ -314,6 +329,8 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
     fun clearRecent() {
         recent = RecentStore.clear(ctx)
+        // 顺手清掉数据库工作副本缓存（cache/dbwork），避免留下打开过的库的明文副本
+        scope.launch(Dispatchers.IO) { runCatching { DbSession.clearCache(ctx) } }
     }
 
     fun loadTable(name: String, page: Int = 0) {

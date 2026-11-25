@@ -305,14 +305,18 @@ private fun PathDialogHost(c: AppController) {
         PasswordDialog(
             path = dbPath,
             onOpen = { pw -> c.openDb(dbPath, pw) },
-            onDismiss = { c.askPasswordFor = null },
+            onDismiss = { c.askPasswordFor = null; c.passwordError = null },
+            error = c.passwordError,
+            onEdit = { c.passwordError = null },
         )
     }
     c.pendingPasswordPath?.let { dbPath ->
         PasswordDialog(
             path = dbPath,
             onOpen = { pw -> c.openDb(dbPath, pw) },
-            onDismiss = { c.pendingPasswordPath = null },
+            onDismiss = { c.pendingPasswordPath = null; c.passwordError = null },
+            error = c.passwordError,
+            onEdit = { c.passwordError = null },
         )
     }
     if (c.showPathInput) {
