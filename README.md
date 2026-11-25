@@ -50,10 +50,10 @@ Actions → **Release APK** → *Run workflow* → version, e.g. `v2.0.2`
 
 - `v2.0.2` → `versionName=2.0.2`, `versionCode=20002` (passed to Gradle, no file edits).
 - If a Release or tag with the same version already exists, it is deleted and rebuilt first, so stale source timestamps never remain.
-- The APK is uploaded to a **draft** release and the release is published immediately afterwards; GitHub then generates the source archives, so the APK and both source downloads share the same publish time (source never precedes the APK).
+- The APK is uploaded to a **draft** release created under a temporary tag; at publish time the tag is renamed to `vX.Y.Z`, which is the moment GitHub creates that tag and generates `Source code (zip)` / `Source code (tar.gz)`. The source downloads therefore never precede the APK, and both show the same publish time.
 - Repository secrets required: `KEYSTORE_BASE64` (base64 of the `.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
-发布只会创建一个 Release，只附 APK；源码由 GitHub 在发布时自动生成 `Source code (zip)` / `Source code (tar.gz)`，不再上传自定义源码 zip。只能手动触发：Actions → **Release APK** → Run workflow → 输入 `v2.0.2`。若同版本已有 Release 或 tag，会先删除重建，避免沿用旧时间戳。APK 先传到草稿 Release，随后立刻正式发布，GitHub 在同一时刻生成源码包，因此 APK 与两个源码下载的发布时间一致、源码不会早于 APK。需要在仓库 Secrets 中配置上面 4 个签名相关变量。
+发布只会创建一个 Release，只附 APK；源码由 GitHub 在发布时自动生成 `Source code (zip)` / `Source code (tar.gz)`，不再上传自定义源码 zip。只能手动触发：Actions → **Release APK** → Run workflow → 输入 `v2.0.2`。若同版本已有 Release 或 tag，会先删除重建，避免沿用旧时间戳。APK 先传到用临时 tag 建的草稿 Release，正式发布时把 tag 改回 `v2.0.2`——GitHub 正是在这一刻创建正式 tag 并生成源码包，因此两个源码下载不会早于 APK，显示的是同一发布时间。需要在仓库 Secrets 中配置上面 4 个签名相关变量。
 
 ## Internationalization · 多语言
 

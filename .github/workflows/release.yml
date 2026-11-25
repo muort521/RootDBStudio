@@ -129,14 +129,6 @@ jobs:
           if [ ! -s notes.md ]; then
             printf 'RootDB Studio %s\n\n详见 CHANGELOG.md。\n' "$VERSION_NO" > notes.md
           fi
-          {
-            echo ""
-            echo "**Assets / 附件**"
-            echo "- \`$APK_NAME\` — Android 8.0+ (API 26+), targetSdk 37"
-            echo "- Source code (zip) / Source code (tar.gz) — 由 GitHub 在发布时自动生成，与 APK 同一发布时间"
-            echo ""
-            echo "签名与之前版本一致，可直接覆盖安装。"
-          } >> notes.md
 
       - name: Publish release
         env:
@@ -144,11 +136,11 @@ jobs:
         run: |
           set -euo pipefail
           V="${{ inputs.version }}"
+          TMP="${V}-draft-${GITHUB_RUN_ID}"
 
-          # 同一版本若已有残留 Release / tag，先彻底删除并重建：
-          # 否则 GitHub 自动源码包会沿用旧 tag 的时间戳，出现「源码比 APK 早」。
+          # 清理同版本残留的 Release / tag，避免沿用旧时间戳
           if gh release view "$V" >/dev/null 2>&1; then
-            echo "发现已存在的 Release $V，删除后重建"
+            echo "删除已存在的 Release $V"
             gh release delete "$V" --yes --cleanup-tag || gh release delete "$V" --yes
           fi
           if git ls-remote --tags origin "refs/tags/$V" | grep -q .; then
@@ -156,19 +148,24 @@ jobs:
             git push origin ":refs/tags/$V" || true
           fi
 
-          # 1) 先建草稿（此时源码包尚不对公开页面生效），2) 上传 APK，3) 立即正式发布。
-          # 发布后 GitHub 自动生成 Source code (zip/tar.gz)，时间与 APK 同批。
-          gh release create "$V" \
+          # 关键：草稿先用临时 tag，APK 上传完后再在“发布”这一步改回正式 tag。
+          # GitHub 是在发布时才创建 vX.Y.Z 这个 tag、并据此生成源码包，
+          # 所以 Source code (zip/tar.gz) 的时间不会早于 APK。
+          gh release create "$TMP" \
             --draft \
             --target "$GITHUB_SHA" \
             --title "RootDB Studio $V" \
             --notes-file notes.md
-          gh release upload "$V" "$APK_NAME" --clobber
-
-          ASSETS="$(gh release view "$V" --json assets -q '.assets[].name')"
+          gh release upload "$TMP" "$APK_NAME" --clobber
+          ASSETS="$(gh release view "$TMP" --json assets -q '.assets[].name')"
           echo "草稿附件：$ASSETS"
           echo "$ASSETS" | grep -qx "$APK_NAME" || { echo "::error::APK 未上传成功"; exit 1; }
 
-          gh release edit "$V" --draft=false
+          gh release edit "$TMP" --tag "$V" --target "$GITHUB_SHA" --draft=false
+
+          # 删掉临时 tag（Release 已改用正式 tag，不受影响）
+          git push origin ":refs/tags/$TMP" 2>/dev/null || true
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TMP}" >/dev/null 2>&1 || true
+
           gh release view "$V" --json tagName,url,assets \
             -q '"\(.tagName) → \(.url)\n附件：\(.assets[].name)"'
