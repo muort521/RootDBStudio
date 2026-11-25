@@ -1,0 +1,30 @@
+# ===== 构建产物（可重新生成，不入库）=====
+build/
+app/build/
+.gradle/
+.kotlin/
+captures/
+.cxx/
+.externalNativeBuild/
+*.apk
+*.aab
+
+# ===== 本机与密钥（不要上传）=====
+local.properties
+keystore.properties
+keystore/
+*.jks
+*.keystore
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ===== 系统与临时文件 =====
+.DS_Store
+Thumbs.db
+*.hprof
+*.log
+*.tmp
