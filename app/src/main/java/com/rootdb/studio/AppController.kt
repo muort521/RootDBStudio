@@ -41,7 +41,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
     // 浏览器
     var rooted by mutableStateOf(false)
-    var rootText by mutableStateOf("正在检测 root 权限…")
+    var rootText by mutableStateOf(ctx.getString(R.string.root_detecting))
     var allFilesGranted by mutableStateOf(false)
     var showPathInput by mutableStateOf(false)
     var path by mutableStateOf(PathPrefs.lastPath(ctx))
@@ -95,7 +95,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
     // 历史 / 备份 / 监控
     var history by mutableStateOf<List<HistoryEntry>>(emptyList())
     var backups by mutableStateOf<List<File>>(emptyList())
-    var monitorText by mutableStateOf("等待采样…")
+    var monitorText by mutableStateOf(ctx.getString(R.string.monitor_waiting))
     var monitorChanges by mutableStateOf(0)
     private var lastMtime = -1L
 
@@ -115,11 +115,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
             val ok = RootShell.hasRoot
             rooted = ok
-            rootText = if (ok) {
-                "可读写 /data/data 等受保护目录"
-            } else {
-                "仅可浏览内部存储；受保护目录需 root"
-            }
+            rootText = ctx.getString(if (ok) R.string.root_ok_desc else R.string.root_no_desc)
         }
     }
 
@@ -152,7 +148,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                         .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
             } catch (_: Throwable) {
-                toast("无法打开授权页面，请在系统设置中手动授予“所有文件访问权限”")
+                toast(ctx.getString(R.string.err_grant_page))
             }
         }
     }
@@ -170,7 +166,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
     fun saveCrypto(spec: CryptoSpec) {
         crypto = spec
         CryptoPrefs.save(ctx, spec)
-        toast("加密设置已保存：${spec.summary}")
+        toast(ctx.getString(R.string.toast_crypto_saved, ctx.getString(spec.summaryRes)))
     }
 
     fun loadPath(raw: String) {
@@ -194,7 +190,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             }
             withContext(Dispatchers.Main) {
                 if (list.isEmpty()) {
-                    toast("目录为空或无权访问：${RootShell.lastError ?: target}")
+                    toast(ctx.getString(R.string.browser_dir_inaccessible, rootFailureText(target)))
                 } else {
                     path = target
                     PathPrefs.saveLastPath(ctx, target)
@@ -224,16 +220,12 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
     /** 重新检测 root（首页「重试」按钮） */
     fun retryRoot() {
         RootShell.resetRootCache()
-        rootText = "正在重新检测 root 权限…"
+        rootText = ctx.getString(R.string.root_rechecking)
         scope.launch(Dispatchers.IO) {
             val ok = RootShell.hasRoot
             withContext(Dispatchers.Main) {
                 rooted = ok
-                rootText = if (ok) {
-                    "可读写 /data/data 等受保护目录"
-                } else {
-                    "仅可浏览内部存储；受保护目录需 root"
-                }
+                rootText = ctx.getString(if (ok) R.string.root_ok_desc else R.string.root_no_desc)
             }
         }
     }
@@ -289,7 +281,12 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     askPasswordFor = null
                     pendingPasswordPath = null
                     tableSearchQuery = ""
-                    toast(if (s.encrypted) "已解密打开：${dbPath.substringAfterLast('/')}" else "已打开：${dbPath.substringAfterLast('/')}")
+                    toast(
+                        ctx.getString(
+                            if (s.encrypted) R.string.toast_opened_decrypted else R.string.toast_opened,
+                            dbPath.substringAfterLast('/'),
+                        )
+                    )
                 }
             } catch (e: DbOpenException) {
                 withContext(Dispatchers.Main) {
@@ -299,25 +296,45 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     } else if (password != null) {
                         // 密钥错误：错误留在对话框内部显示，对话框保持打开方便直接改密钥重试
                         if (askPasswordFor != null) askPasswordFor = dbPath else pendingPasswordPath = dbPath
-                        val raw = e.message.orEmpty()
-                        passwordError = if (raw.contains("not a database") || raw.contains("encrypted", true)) {
-                            "密钥不正确，无法解密该数据库；也可能这个文件本身不是数据库。"
-                        } else {
-                            raw.ifBlank { "打开失败，请检查密钥或文件格式" }
+                        val detail = e.detail.orEmpty()
+                        passwordError = when {
+                            e.resId == R.string.err_wrong_key ||
+                                detail.contains("not a database") || detail.contains("encrypted", true) ->
+                                ctx.getString(R.string.pwd_error_wrong_key)
+
+                            e.resId in setOf(
+                                R.string.err_cannot_read_source,
+                                R.string.err_read_schema_encrypted,
+                                R.string.err_sqlcipher_load,
+                            ) -> ctx.getString(e.resId)
+
+                            else -> detail.ifBlank { ctx.getString(R.string.pwd_error_default) }
                         }
                     } else {
-                        toast(e.message ?: "打开失败")
+                        toast(errorTextOf(e))
                     }
                 }
             } catch (t: Throwable) {
                 withContext(Dispatchers.Main) {
-                    if (password != null) passwordError = "打开失败：${t.message}"
-                    else toast("打开失败：${t.message}")
+                    val text = ctx.getString(R.string.toast_open_failed_detail, t.message.orEmpty())
+                    if (password != null) passwordError = text else toast(text)
                 }
             } finally {
                 withContext(Dispatchers.Main) { busy = false }
             }
         }
+    }
+
+    /** shell 失败细节：超时/被拒绝时用本地化文案，否则用调用方给的兜底文案 */
+    private fun rootFailureText(fallback: String): String =
+        if (RootShell.lastError != null) ctx.getString(R.string.err_root_timeout) else fallback
+
+    /** 把 [DbOpenException] 按当前语言格式化成可展示文本 */
+    private fun errorTextOf(e: DbOpenException): String = when (e.resId) {
+        R.string.err_cannot_open_db, R.string.err_wrong_key_or_format ->
+            ctx.getString(e.resId, e.detail.orEmpty())
+
+        else -> ctx.getString(e.resId)
     }
 
     fun closeDb() {
@@ -358,7 +375,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                     tab = 0
                 }
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) { toast("读取表失败：${t.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_read_table_failed, t.message.orEmpty())) }
             } finally {
                 withContext(Dispatchers.Main) { busy = false }
             }
@@ -409,8 +426,8 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
 
             EditKind.NULL -> null
             EditKind.TEXT -> input
-            EditKind.INTEGER -> input.toLongOrNull() ?: throw IllegalArgumentException("不是合法整数")
-            EditKind.REAL -> input.toDoubleOrNull() ?: throw IllegalArgumentException("不是合法小数")
+            EditKind.INTEGER -> input.toLongOrNull() ?: throw IllegalArgumentException(ctx.getString(R.string.err_not_integer))
+            EditKind.REAL -> input.toDoubleOrNull() ?: throw IllegalArgumentException(ctx.getString(R.string.err_not_real))
             EditKind.BLOB -> HexBytes.decode(input.removePrefix("BLOB ").trim())
         }
     }
@@ -426,7 +443,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 val ok = s.updateCell(t, rowid, column, value)
                 withContext(Dispatchers.Main) {
                     if (ok) {
-                        toast("已更新 $column")
+                        toast(ctx.getString(R.string.toast_updated, column))
                         HistoryStore.add(
                             ctx,
                             db = s.sourcePath.substringAfterLast('/'),
@@ -440,11 +457,11 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                         refreshHistory()
                         loadTable(t, pageIndex)
                     } else {
-                        toast("更新失败：未找到目标行")
+                        toast(ctx.getString(R.string.toast_update_row_missing))
                     }
                 }
             } catch (t2: Throwable) {
-                withContext(Dispatchers.Main) { toast("更新失败：${t2.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_update_failed, t2.message.orEmpty())) }
             }
         }
     }
@@ -457,16 +474,16 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 val ok = s.deleteRow(t, rowid)
                 withContext(Dispatchers.Main) {
                     if (ok) {
-                        toast("已删除 rowid=$rowid")
+                        toast(ctx.getString(R.string.toast_deleted, rowid))
                         HistoryStore.add(ctx, s.sourcePath.substringAfterLast('/'), t, "DELETE", "", "rowid=$rowid", "", rowid)
                         refreshHistory()
                         loadTable(t, pageIndex)
                     } else {
-                        toast("删除失败")
+                        toast(ctx.getString(R.string.toast_delete_failed))
                     }
                 }
             } catch (e: Throwable) {
-                withContext(Dispatchers.Main) { toast("删除失败：${e.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_delete_failed_detail, e.message.orEmpty())) }
             }
         }
     }
@@ -479,16 +496,16 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 val id = s.insertRow(t, values)
                 withContext(Dispatchers.Main) {
                     if (id >= 0) {
-                        toast("已插入 rowid=$id")
+                        toast(ctx.getString(R.string.toast_inserted, id))
                         HistoryStore.add(ctx, s.sourcePath.substringAfterLast('/'), t, "INSERT", "", null, values.toString(), id)
                         refreshHistory()
                         loadTable(t, pageIndex)
                     } else {
-                        toast("插入失败（可能主键冲突或类型不匹配）")
+                        toast(ctx.getString(R.string.toast_insert_failed))
                     }
                 }
             } catch (e: Throwable) {
-                withContext(Dispatchers.Main) { toast("插入失败：${e.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_insert_failed_detail, e.message.orEmpty())) }
             }
         }
     }
@@ -504,13 +521,13 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             }
             withContext(Dispatchers.Main) {
                 if (ok) {
-                    toast("已写回原文件，原库已备份为 *.dbstudio.bak")
+                    toast(ctx.getString(R.string.toast_write_back_ok))
                     HistoryStore.add(ctx, s.sourcePath.substringAfterLast('/'), "", "WRITE_BACK", "", null, null, null)
                     refreshHistory()
                     // 重新载入，继续编辑
                     openDb(s.sourcePath, s.password)
                 } else {
-                    toast("写回失败：${RootShell.lastError ?: "权限或文件被占用"}")
+                    toast(ctx.getString(R.string.toast_write_back_failed, rootFailureText(ctx.getString(R.string.err_permission_or_locked))))
                 }
                 busy = false
             }
@@ -523,10 +540,10 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             val f = BackupStore.create(ctx, s)
             withContext(Dispatchers.Main) {
                 if (f != null) {
-                    toast("备份完成：${f.name}")
+                    toast(ctx.getString(R.string.toast_backup_done, f.name))
                     refreshBackups()
                 } else {
-                    toast("备份失败")
+                    toast(ctx.getString(R.string.toast_backup_failed))
                 }
             }
         }
@@ -544,14 +561,14 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 val ok = RootShell.writeBack(s.workingFile, s.sourcePath)
                 withContext(Dispatchers.Main) {
                     if (ok) {
-                        toast("已从备份恢复并写回原库")
+                        toast(ctx.getString(R.string.toast_restored))
                         openDb(s.sourcePath, s.password)
                     } else {
-                        toast("恢复失败：${RootShell.lastError ?: "写回被拒绝"}")
+                        toast(ctx.getString(R.string.toast_restore_failed, rootFailureText(ctx.getString(R.string.err_write_denied))))
                     }
                 }
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) { toast("恢复失败：${t.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_restore_failed, t.message.orEmpty())) }
             } finally {
                 withContext(Dispatchers.Main) { busy = false }
             }
@@ -567,10 +584,10 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 s.workingFile.inputStream().use { input -> tmp.outputStream().use { input.copyTo(it) } }
                 val uri = BackupStore.exportToDownloads(ctx, tmp)
                 withContext(Dispatchers.Main) {
-                    toast(if (uri != null) "已导出到系统下载目录：$name" else "导出失败")
+                    toast(if (uri != null) ctx.getString(R.string.toast_exported, name) else ctx.getString(R.string.toast_export_failed))
                 }
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) { toast("导出失败：${t.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_export_failed_detail, t.message.orEmpty())) }
             }
         }
     }
@@ -579,7 +596,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
             val uri = BackupStore.exportToDownloads(ctx, f)
             withContext(Dispatchers.Main) {
-                toast(if (uri != null) "已导出到系统下载目录：${f.name}" else "导出失败")
+                toast(if (uri != null) ctx.getString(R.string.toast_exported, f.name) else ctx.getString(R.string.toast_export_failed))
             }
         }
     }
@@ -591,7 +608,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             val result = try {
                 s.exec(sql)
             } catch (t: Throwable) {
-                "执行失败：${t.message}"
+                ctx.getString(R.string.err_sql_exec_failed, t.message.orEmpty())
             }
             withContext(Dispatchers.Main) {
                 busy = false
@@ -613,7 +630,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         val s = session ?: return
         val rowid = entry.rowid ?: return
         if (entry.op != "UPDATE" || entry.column.isBlank()) {
-            toast("该记录不支持自动撤销，可用备份恢复")
+            toast(ctx.getString(R.string.toast_undo_unsupported))
             return
         }
         scope.launch(Dispatchers.IO) {
@@ -621,16 +638,16 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 val ok = s.updateByKey(entry.table, "rowid = ?", arrayOf(rowid.toString()), entry.column, entry.oldValue)
                 withContext(Dispatchers.Main) {
                     if (ok) {
-                        toast("已撤销：${entry.table}.${entry.column} 恢复为 ${entry.oldValue}")
+                        toast(ctx.getString(R.string.toast_undo_ok, entry.table, entry.column, entry.oldValue.orEmpty()))
                         HistoryStore.remove(ctx, entry.id)
                         refreshHistory()
                         loadTable(entry.table, pageIndex)
                     } else {
-                        toast("撤销失败")
+                        toast(ctx.getString(R.string.toast_undo_failed))
                     }
                 }
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) { toast("撤销失败：${t.message}") }
+                withContext(Dispatchers.Main) { toast(ctx.getString(R.string.toast_undo_failed_detail, t.message.orEmpty())) }
             }
         }
     }
@@ -644,7 +661,7 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             val p = s.sourcePath + suffix
             val st = RootShell.stat(p)
             if (st == null) {
-                sb.append(p.substringAfterLast('/')).append("  不可读\n")
+                sb.append(p.substringAfterLast('/' )).append(ctx.getString(R.string.monitor_unreadable)).append("\n")
             } else {
                 sb.append(p.substringAfterLast('/'))
                     .append("  ").append(BackupStore.humanSize(st.size))
@@ -653,12 +670,12 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
                 if (suffix.isEmpty()) latest = st.mtime
             }
         }
-        sb.append("工作副本：").append(BackupStore.humanSize(s.workingFile.length()))
+        sb.append(ctx.getString(R.string.monitor_working_copy, BackupStore.humanSize(s.workingFile.length())))
         if (lastMtime >= 0 && latest > 0 && latest != lastMtime) {
             monitorChanges += 1
         }
         if (latest > 0) lastMtime = latest
-        sb.append("\n检测到外部变更：").append(monitorChanges).append(" 次")
+        sb.append("\n").append(ctx.getString(R.string.monitor_external_changes, monitorChanges))
         monitorText = sb.toString()
     }
 
@@ -666,13 +683,9 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(ms))
 }
 
-enum class EditKind(val label: String) {
-    AUTO("自动（沿用原类型）"),
-    TEXT("文本 TEXT"),
-    INTEGER("整数 INTEGER"),
-    REAL("小数 REAL"),
-    BLOB("BLOB（十六进制）"),
-    NULL("NULL"),
+/** 单元格编辑时的类型选择；界面文案在 Dialogs.kt 里按当前语言取资源 */
+enum class EditKind {
+    AUTO, TEXT, INTEGER, REAL, BLOB, NULL,
 }
 
 /** 字节与十六进制互转（单元格输入输出用） */

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.rootdb.studio.R
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 文件类型分类，用于挑选图标与配色 */
@@ -143,29 +144,29 @@ fun iconOfKind(kind: FileKind): ImageVector = when (kind) {
     FileKind.OTHER -> Icons.Filled.InsertDriveFile
 }
 
-/** 类型的中文名称，同时作为图标的无障碍描述 */
-fun labelOfKind(kind: FileKind): String = when (kind) {
-    FileKind.DIR -> "文件夹"
-    FileKind.DB -> "数据库文件"
-    FileKind.IMAGE -> "图片"
-    FileKind.VIDEO -> "视频"
-    FileKind.AUDIO -> "音频"
-    FileKind.PLAYLIST -> "播放列表"
-    FileKind.SUBTITLE -> "字幕"
-    FileKind.ARCHIVE -> "压缩包"
-    FileKind.APK -> "应用包"
-    FileKind.BINARY -> "二进制文件"
-    FileKind.CODE -> "代码文件"
-    FileKind.WEB -> "网页文件"
-    FileKind.TEXT -> "文本文件"
-    FileKind.PDF -> "PDF 文档"
-    FileKind.DOC -> "文档"
-    FileKind.SHEET -> "表格"
-    FileKind.SLIDE -> "演示文稿"
-    FileKind.FONT -> "字体文件"
-    FileKind.CERT -> "证书或密钥"
-    FileKind.LOG -> "日志文件"
-    FileKind.OTHER -> "文件"
+/** 类型的名称资源，同时用于图标的无障碍描述（由界面按当前语言取文案） */
+fun labelResOfKind(kind: FileKind): Int = when (kind) {
+    FileKind.DIR -> R.string.kind_dir
+    FileKind.DB -> R.string.kind_db
+    FileKind.IMAGE -> R.string.kind_image
+    FileKind.VIDEO -> R.string.kind_video
+    FileKind.AUDIO -> R.string.kind_audio
+    FileKind.PLAYLIST -> R.string.kind_playlist
+    FileKind.SUBTITLE -> R.string.kind_subtitle
+    FileKind.ARCHIVE -> R.string.kind_archive
+    FileKind.APK -> R.string.kind_apk
+    FileKind.BINARY -> R.string.kind_binary
+    FileKind.CODE -> R.string.kind_code
+    FileKind.WEB -> R.string.kind_web
+    FileKind.TEXT -> R.string.kind_text
+    FileKind.PDF -> R.string.kind_pdf
+    FileKind.DOC -> R.string.kind_doc
+    FileKind.SHEET -> R.string.kind_sheet
+    FileKind.SLIDE -> R.string.kind_slide
+    FileKind.FONT -> R.string.kind_font
+    FileKind.CERT -> R.string.kind_cert
+    FileKind.LOG -> R.string.kind_log
+    FileKind.OTHER -> R.string.kind_other
 }
 
 /** 图标配色：目录/数据库用主色，文档与媒体用正文色，PDF/日志用错误色，保证明暗两种主题下都清晰 */

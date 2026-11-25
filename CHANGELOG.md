@@ -2,6 +2,14 @@
 
 数据库工坊（`com.rootdb.studio`）版本变更记录。版本号对应 `app/build.gradle.kts` 中的 `versionName` / `versionCode`。
 
+## 2.0.0 — versionCode 12
+
+- **界面文案全部国际化**：所有界面文字、提示、对话框、错误信息都移入 `res/values/strings.xml`（英文，默认）与 `res/values-zh/strings.xml`（简体中文），代码里不再有硬编码的中文界面文案。
+- 跟随系统语言自动切换；同时提供 `res/xml/locales_config.xml` 并在清单中声明 `android:localeConfig`，Android 13+ 的「设置 → 应用 → 数据库工坊 → 语言」可单独为本应用选择语言。
+- 新增语言只需复制 `values/strings.xml` 为 `values-<语言>/strings.xml`（如 `values-ja`）翻译数值，并在 `locales_config.xml` 里追加一条 `<locale>`，无需改代码。
+- 动态文案改为带占位符的资源（如 `备份完成：%1$s`、`第 %1$d 页 / %2$s 行`、`N 行`），数字与路径正常插入，翻译时可调整语序。
+- 数据层与 root 层不再拼接中文：`DbOpenException` 改为携带字符串资源 ID，由界面按当前语言格式化；加密算法名、文件类型名同样走资源。
+
 ## 1.9.1 — versionCode 11
 
 - **修复：行与行之间的横线不显示**。1.9 里横向分隔线用的是 `fillMaxWidth()`，而它处在横向滚动容器中、横向约束是无限的，宽度被压成 0，所以只有竖线可见、横线看不到。现在按表格真实总宽（78dp + 156dp × 列数）显式给宽度，横线正常显示；表头下方那条略粗的分隔线同样是这个问题，一并修好。网格线同时加深（`onBackgroundVariant` 32% 透明度），行列都看得清。

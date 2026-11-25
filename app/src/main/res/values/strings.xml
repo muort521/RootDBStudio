@@ -1,5 +1,266 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default (English) UI strings. Chinese lives in values-zh/strings.xml.
+  To add another language: copy values/strings.xml into values-<lang>/strings.xml
+  (e.g. values-ja, values-de) and translate the values; keys stay identical.
+-->
 <resources>
-    <string name="app_name">数据库工坊</string>
+    <string name="app_name">RootDB Studio</string>
+
+    <!-- Common -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_open">Open</string>
+    <string name="action_browse">Browse</string>
+    <string name="action_save">Save</string>
+    <string name="action_close">Close</string>
+    <string name="action_run">Run</string>
+    <string name="action_insert">Insert</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_export">Export</string>
+    <string name="action_undo">Undo</string>
+    <string name="content_desc_back">Back</string>
+    <string name="content_desc_clear_search">Clear search</string>
+    <string name="unknown">?</string>
+
+    <!-- Home -->
+    <string name="home_root_ready">Root ready</string>
+    <string name="home_root_not_granted">Root not granted</string>
+    <string name="home_check">Check</string>
+    <string name="root_detecting">Detecting root…</string>
+    <string name="root_rechecking">Re-checking root…</string>
+    <string name="root_ok_desc">Can read/write protected dirs such as /data/data</string>
+    <string name="root_no_desc">Internal storage only; protected dirs need root</string>
+    <string name="home_all_files">All files access</string>
+    <string name="home_all_files_granted">Granted; any file under /storage/emulated/0 is browsable</string>
+    <string name="home_all_files_missing">Not granted; internal storage may not be listable</string>
+    <string name="home_value_granted">Granted</string>
+    <string name="home_value_go_grant">Grant</string>
+    <string name="home_open_path">Open a specific path</string>
+    <string name="home_open_path_desc">Enter a path such as /data/data/…</string>
+    <string name="home_quick_access">Quick access</string>
+    <string name="home_quick_root">Root (all system files)</string>
+    <string name="home_quick_data_data">App private data (incl. app databases)</string>
+    <string name="home_quick_data_system">System settings and account databases</string>
+    <string name="home_quick_internal">Internal storage (no root)</string>
+    <string name="home_recent">Recent (max 10)</string>
+    <string name="home_recent_empty">No browsing history yet. Start from a quick entry or “Open a specific path”.</string>
+    <string name="home_dir_internal_storage">Internal storage</string>
+    <string name="err_grant_page">Cannot open the permission page; grant “All files access” in system settings</string>
+
+    <!-- Browser -->
+    <string name="browser_parent">Parent folder</string>
+    <string name="browser_reading">Reading directory…</string>
+    <string name="browser_dir_empty">Directory is empty or permission denied. For /data/data, make sure root is granted.</string>
+    <string name="browser_search_hint">Search this folder</string>
+    <string name="browser_search_match">Matches “%1$s”: %2$d / %3$d items</string>
+    <string name="browser_search_none">No entry contains “%1$s”</string>
+    <string name="browser_entry_dir">Folder</string>
+    <string name="browser_entry_link_suffix"> · link</string>
+    <string name="browser_dir_inaccessible">Directory empty or inaccessible: %1$s</string>
+
+    <!-- File kinds -->
+    <string name="kind_dir">Folder</string>
+    <string name="kind_db">Database file</string>
+    <string name="kind_image">Image</string>
+    <string name="kind_video">Video</string>
+    <string name="kind_audio">Audio</string>
+    <string name="kind_playlist">Playlist</string>
+    <string name="kind_subtitle">Subtitles</string>
+    <string name="kind_archive">Archive</string>
+    <string name="kind_apk">App package</string>
+    <string name="kind_binary">Binary file</string>
+    <string name="kind_code">Source code</string>
+    <string name="kind_web">Web file</string>
+    <string name="kind_text">Text file</string>
+    <string name="kind_pdf">PDF document</string>
+    <string name="kind_doc">Document</string>
+    <string name="kind_sheet">Spreadsheet</string>
+    <string name="kind_slide">Presentation</string>
+    <string name="kind_font">Font file</string>
+    <string name="kind_cert">Certificate or key</string>
+    <string name="kind_log">Log file</string>
+    <string name="kind_other">File</string>
+
+    <!-- Database home -->
+    <string name="db_title">Database</string>
+    <string name="db_status_dirty">Unsaved</string>
+    <string name="db_status_synced">Synced</string>
+    <string name="db_tab_tables">Tables</string>
+    <string name="db_tab_monitor">Live monitor</string>
+    <string name="db_tab_backup">Backups</string>
+    <string name="db_tab_history">History</string>
+    <string name="db_source_file">Source file</string>
+    <string name="db_encryption">Encryption</string>
+    <string name="db_enc_sqlcipher">SQLCipher (decrypted)</string>
+    <string name="db_enc_plain">Plain SQLite</string>
+    <string name="db_tables_views">Tables / views</string>
+    <string name="db_count_items">%1$d items</string>
+    <string name="db_section_tables">Tables</string>
+    <string name="db_type_view">View</string>
+    <string name="db_type_table">Table</string>
+    <string name="db_no_tables">No accessible tables</string>
+
+    <!-- Monitor -->
+    <string name="monitor_title">Live monitor</string>
+    <string name="monitor_interval_title">Sampling interval</string>
+    <string name="monitor_interval_desc">Every 1.5 s (polls size and mtime of the main db, WAL and SHM)</string>
+    <string name="monitor_note_title">Note</string>
+    <string name="monitor_note_desc">If an external change is detected, restore from Backups or reopen the database to load the latest data</string>
+    <string name="monitor_waiting">Waiting for samples…</string>
+    <string name="monitor_unreadable">  unreadable</string>
+    <string name="monitor_working_copy">Working copy: %1$s</string>
+    <string name="monitor_external_changes">External changes detected: %1$d</string>
+
+    <!-- Backups -->
+    <string name="backup_new">New backup</string>
+    <string name="backup_export_downloads">Export to Downloads</string>
+    <string name="backup_empty">No backups yet</string>
+    <string name="toast_backup_done">Backup created: %1$s</string>
+    <string name="toast_backup_failed">Backup failed</string>
+    <string name="toast_restored">Restored from backup and written back</string>
+    <string name="toast_restore_failed">Restore failed: %1$s</string>
+    <string name="err_write_denied">write-back denied</string>
+    <string name="toast_exported">Exported to Downloads: %1$s</string>
+    <string name="toast_export_failed">Export failed</string>
+    <string name="toast_export_failed_detail">Export failed: %1$s</string>
+
+    <!-- History -->
+    <string name="history_clear">Clear history</string>
+    <string name="history_clear_desc">Only clears records; database content is untouched</string>
+    <string name="history_empty">No operations yet</string>
+    <string name="toast_undo_unsupported">This entry cannot be undone automatically; restore from a backup instead</string>
+    <string name="toast_undo_ok">Undone: %1$s.%2$s restored to %3$s</string>
+    <string name="toast_undo_failed">Undo failed</string>
+    <string name="toast_undo_failed_detail">Undo failed: %1$s</string>
+
+    <!-- Table -->
+    <string name="table_insert_row">Insert row</string>
+    <string name="table_sql">SQL</string>
+    <string name="table_crypto">Encryption</string>
+    <string name="table_reveal_on">Reveal: on</string>
+    <string name="table_reveal_off">Reveal: off</string>
+    <string name="table_write_back">Write back</string>
+    <string name="table_backup">Backup</string>
+    <string name="table_search_hint">Search all columns in this table</string>
+    <string name="table_matched_rows">%1$d rows</string>
+    <string name="table_empty">This table has no data, or this page is empty</string>
+    <string name="table_prev_page">Previous</string>
+    <string name="table_next_page">Next</string>
+    <string name="table_page_info">Page %1$d / %2$s rows</string>
+    <string name="table_no_rowid">This table has no rowid (WITHOUT ROWID); edit it via SQL</string>
+    <string name="table_delete_title">Delete record</string>
+    <string name="table_delete_summary">Will delete rowid=%1$d. Consider making a backup first.</string>
+    <string name="toast_read_table_failed">Failed to read table: %1$s</string>
+    <string name="toast_updated">Updated %1$s</string>
+    <string name="toast_update_row_missing">Update failed: target row not found</string>
+    <string name="toast_update_failed">Update failed: %1$s</string>
+    <string name="toast_deleted">Deleted rowid=%1$d</string>
+    <string name="toast_delete_failed">Delete failed</string>
+    <string name="toast_delete_failed_detail">Delete failed: %1$s</string>
+    <string name="toast_inserted">Inserted rowid=%1$d</string>
+    <string name="toast_insert_failed">Insert failed (primary key conflict or type mismatch?)</string>
+    <string name="toast_insert_failed_detail">Insert failed: %1$s</string>
+    <string name="toast_write_back_ok">Written back to the original file; the original was backed up as *.dbstudio.bak</string>
+    <string name="toast_write_back_failed">Write-back failed: %1$s</string>
+    <string name="err_permission_or_locked">permission denied or file in use</string>
+    <string name="err_root_timeout">command timed out or denied</string>
+    <string name="err_not_integer">Not a valid integer</string>
+    <string name="err_not_real">Not a valid number</string>
+
+    <!-- Search -->
+    <string name="search_clear">Clear search</string>
+
+    <!-- Database open -->
+    <string name="toast_opened">Opened: %1$s</string>
+    <string name="toast_opened_decrypted">Decrypted and opened: %1$s</string>
+    <string name="toast_open_failed">Open failed</string>
+    <string name="toast_open_failed_detail">Open failed: %1$s</string>
+    <string name="pwd_error_wrong_key">Incorrect key; this database cannot be decrypted. The file itself may also not be a database.</string>
+    <string name="pwd_error_default">Open failed; check the key or the file format</string>
+    <string name="toast_crypto_saved">Encryption settings saved: %1$s</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_open_db_title">Open database</string>
+    <string name="dialog_open_db_desc">Plain SQLite opens directly. For a SQLCipher database enter the key (e.g. the 32-char hex key of WeChat EnMicroMsg.db).</string>
+    <string name="dialog_sqlcipher_key">SQLCipher key (leave empty to open as plain database)</string>
+    <string name="dialog_browse_path_title">Browse a specific path</string>
+    <string name="dialog_browse_path_summary">e.g. /data/data/com.tencent.mm/databases or /sdcard/Download</string>
+    <string name="dialog_absolute_path">Absolute path</string>
+    <string name="dialog_edit_column_title">Edit %1$s</string>
+    <string name="dialog_edit_column_summary">%1$s · original: %2$s</string>
+    <string name="dialog_value">Value</string>
+    <string name="edit_kind_auto">Auto</string>
+    <string name="edit_kind_text">Text</string>
+    <string name="edit_kind_integer">Integer</string>
+    <string name="edit_kind_real">Real</string>
+    <string name="edit_kind_blob">BLOB</string>
+    <string name="edit_kind_null">NULL</string>
+    <string name="edit_kind_auto_full">Auto (keep original type)</string>
+    <string name="edit_kind_text_full">Text TEXT</string>
+    <string name="edit_kind_integer_full">Integer INTEGER</string>
+    <string name="edit_kind_real_full">Real REAL</string>
+    <string name="edit_kind_blob_full">BLOB (hex)</string>
+    <string name="dialog_crypto_summary">Encryption: %1$s</string>
+    <string name="dialog_crypto_keep_cipher">Keep ciphertext as-is</string>
+    <string name="dialog_crypto_encrypt_on_save">Encrypt on save</string>
+    <string name="dialog_crypto_preview">Decrypt preview</string>
+    <string name="dialog_crypto_preview_failed">Could not decrypt into readable text (the value may not be encrypted with the current algorithm)</string>
+    <string name="dialog_crypto_not_configured">No decryption algorithm configured. Pick AES / 3DES / XOR / Base64 under “Encryption” on the table page to edit encrypted fields directly.</string>
+    <string name="dialog_delete_row">Delete row</string>
+
+    <string name="crypto_dialog_title">Field decryption / encryption</string>
+    <string name="crypto_dialog_summary">View and edit values stored in encrypted form</string>
+    <string name="crypto_algorithm">Algorithm</string>
+    <string name="crypto_key_label">Key (AES accepts 16/24/32 bytes; other lengths are SHA-256 derived)</string>
+    <string name="crypto_iv_label">IV / Nonce (needed for CBC and GCM; derived automatically if empty)</string>
+    <string name="crypto_payload">Ciphertext encoding</string>
+    <string name="crypto_selftest">Self-test</string>
+    <string name="crypto_selftest_ok">Self-test: database studio → %1$s → %2$s</string>
+    <string name="crypto_selftest_failed">Self-test failed: %1$s</string>
+    <string name="crypto_save_settings">Save settings</string>
+    <string name="crypto_plain">Plaintext</string>
+
+    <string name="algo_none">None (plaintext)</string>
+    <string name="algo_aes_ecb">AES / ECB / PKCS5</string>
+    <string name="algo_aes_cbc">AES / CBC / PKCS5</string>
+    <string name="algo_aes_gcm">AES / GCM / NoPadding</string>
+    <string name="algo_des_ecb">DES / ECB / PKCS5</string>
+    <string name="algo_des3_ecb">3DES / ECB / PKCS5</string>
+    <string name="algo_base64">Base64</string>
+    <string name="algo_xor">XOR (hex output)</string>
+    <string name="fmt_text">Text</string>
+    <string name="fmt_hex">Hex</string>
+    <string name="fmt_base64">Base64</string>
+
+    <string name="sql_dialog_title">Run SQL</string>
+    <string name="sql_dialog_summary">Queries and write statements are supported</string>
+    <string name="sql_dialog_label">SQL</string>
+    <string name="sql_result_ok">Executed successfully</string>
+    <string name="sql_result_rows">Total %1$d rows</string>
+    <string name="sql_result_failed">Execution failed: %1$s</string>
+
+    <string name="insert_dialog_title">Insert record</string>
+    <string name="insert_dialog_summary">Empty fields are written as NULL</string>
+    <string name="insert_pk_suffix"> (primary key)</string>
+    <string name="insert_need_one_field">Fill in at least one field</string>
+
+    <!-- Data layer errors -->
+    <string name="err_cannot_read_source">Cannot read the source file (is root granted?)</string>
+    <string name="err_cannot_open_db">Cannot open the database: %1$s</string>
+    <string name="err_file_maybe_encrypted">the file may be encrypted</string>
+    <string name="err_read_schema_encrypted">Cannot read the database schema (it may be encrypted)</string>
+    <string name="err_sqlcipher_load">SQLCipher engine failed to load (unsupported ABI)</string>
+    <string name="err_wrong_key_or_format">Wrong key or unsupported database format: %1$s</string>
+    <string name="err_wrong_key">Wrong key (decryption failed)</string>
+    <string name="err_sql_exec_failed">Execution failed: %1$s</string>
+    <string name="err_hex_even">Hex input must have an even length</string>
+    <string name="err_hex_chars">Hex input contains non-hex characters</string>
+    <string name="err_xor_key">XOR requires a key</string>
+
     <color name="ic_launcher_background">#0E4C92</color>
 </resources>

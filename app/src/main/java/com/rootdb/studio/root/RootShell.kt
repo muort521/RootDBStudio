@@ -202,7 +202,7 @@ object RootShell {
                 Thread.sleep(6)
             }
         }
-        lastError = "命令执行超时或被拒绝"
+        lastError = "command timed out or denied"
         closeQuietly()
         return null
     }

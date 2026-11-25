@@ -2,6 +2,8 @@ package com.rootdb.studio.data
 
 import android.content.Context
 import android.util.Base64
+import androidx.annotation.StringRes
+import com.rootdb.studio.R
 import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -22,12 +24,12 @@ object Hex {
 
     fun decode(text: String): ByteArray {
         val clean = text.replace(" ", "").replace("\n", "").replace("\r", "").removePrefix("0x")
-        require(clean.length % 2 == 0) { "十六进制长度必须为偶数" }
+        require(clean.length % 2 == 0) { "Hex input must have an even length" }
         val out = ByteArray(clean.length / 2)
         for (i in out.indices) {
             val hi = Character.digit(clean[i * 2], 16)
             val lo = Character.digit(clean[i * 2 + 1], 16)
-            require(hi >= 0 && lo >= 0) { "包含非十六进制字符" }
+            require(hi >= 0 && lo >= 0) { "Hex input contains non-hex characters" }
             out[i] = ((hi shl 4) or lo).toByte()
         }
         return out
@@ -38,21 +40,21 @@ object Hex {
     fun unb64(text: String): ByteArray = Base64.decode(text, Base64.NO_WRAP)
 }
 
-enum class Algo(val label: String, val transformation: String, val needsIv: Boolean) {
-    NONE("不加密（明文）", "", false),
-    AES_ECB("AES / ECB / PKCS5", "AES/ECB/PKCS5Padding", false),
-    AES_CBC("AES / CBC / PKCS5", "AES/CBC/PKCS5Padding", true),
-    AES_GCM("AES / GCM / NoPadding", "AES/GCM/NoPadding", true),
-    DES_ECB("DES / ECB / PKCS5", "DES/ECB/PKCS5Padding", false),
-    DES3_ECB("3DES / ECB / PKCS5", "DESede/ECB/PKCS5Padding", false),
-    XOR("XOR 异或（输出十六进制）", "XOR", false),
-    BASE64("Base64 编码", "BASE64", false),
+enum class Algo(@StringRes val labelRes: Int, val transformation: String, val needsIv: Boolean) {
+    NONE(R.string.algo_none, "", false),
+    AES_ECB(R.string.algo_aes_ecb, "AES/ECB/PKCS5Padding", false),
+    AES_CBC(R.string.algo_aes_cbc, "AES/CBC/PKCS5Padding", true),
+    AES_GCM(R.string.algo_aes_gcm, "AES/GCM/NoPadding", true),
+    DES_ECB(R.string.algo_des_ecb, "DES/ECB/PKCS5Padding", false),
+    DES3_ECB(R.string.algo_des3_ecb, "DESede/ECB/PKCS5Padding", false),
+    XOR(R.string.algo_xor, "XOR", false),
+    BASE64(R.string.algo_base64, "BASE64", false),
 }
 
-enum class KeyFormat(val label: String) {
-    TEXT("文本"),
-    HEX("十六进制"),
-    BASE64("Base64"),
+enum class KeyFormat(@StringRes val labelRes: Int) {
+    TEXT(R.string.fmt_text),
+    HEX(R.string.fmt_hex),
+    BASE64(R.string.fmt_base64),
 }
 
 data class CryptoSpec(
@@ -64,7 +66,10 @@ data class CryptoSpec(
     val payload: KeyFormat = KeyFormat.BASE64,
 ) {
     val enabled: Boolean get() = algo != Algo.NONE
-    val summary: String get() = if (enabled) algo.label else "明文"
+
+    /** 当前语言下的算法描述（供提示条展示） */
+    @get:StringRes
+    val summaryRes: Int get() = if (enabled) algo.labelRes else R.string.crypto_plain
 }
 
 object CryptoEngine {
@@ -169,7 +174,7 @@ object CryptoEngine {
     }
 
     private fun xor(data: ByteArray, key: ByteArray): ByteArray {
-        require(key.isNotEmpty()) { "XOR 需要密钥" }
+        require(key.isNotEmpty()) { "XOR requires a key" }
         val out = ByteArray(data.size)
         for (i in data.indices) out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
         return out

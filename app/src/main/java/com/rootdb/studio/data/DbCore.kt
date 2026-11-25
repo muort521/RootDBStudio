@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import androidx.annotation.StringRes
+import com.rootdb.studio.R
 import com.rootdb.studio.root.RootShell
 import java.io.File
 import java.io.FileInputStream
@@ -29,7 +31,12 @@ data class RowData(val rowid: Long?, val cells: List<Cell>)
 
 data class RowsPage(val columns: List<String>, val rows: List<RowData>, val total: Long?)
 
-class DbOpenException(message: String, val needPassword: Boolean = false) : Exception(message)
+/** 数据库打开失败：带上要展示的字符串资源与可选技术细节，由 UI 层格式化到当前语言 */
+class DbOpenException(
+    @StringRes val resId: Int,
+    val detail: String? = null,
+    val needPassword: Boolean = false,
+) : Exception(detail ?: "")
 
 interface DbHandle {
     fun rawQuery(sql: String, args: Array<String>?): Cursor
@@ -63,6 +70,7 @@ private class CipherHandle(private val db: net.zetetic.database.sqlcipher.SQLite
 }
 
 class DbSession private constructor(
+    private val ctx: Context,
     val sourcePath: String,
     val workingFile: File,
     private val handle: DbHandle,
@@ -226,7 +234,7 @@ class DbSession private constructor(
         if (!isQuery) {
             handle.execSQL(trimmed)
             dirty = true
-            return "执行成功"
+            return ctx.getString(R.string.sql_result_ok)
         }
         val sb = StringBuilder()
         handle.rawQuery(trimmed, null).use { c ->
@@ -243,7 +251,7 @@ class DbSession private constructor(
                 sb.append(line).append('\n')
                 n++
             }
-            sb.append("共 ").append(n).append(" 行")
+            sb.append(ctx.getString(R.string.sql_result_rows, n))
         }
         return sb.toString()
     }
@@ -338,25 +346,29 @@ class DbSession private constructor(
             val wanted = File(cacheDir(ctx), safeName(sourcePath))
             wanted.parentFile?.mkdirs()
             if (!stage(ctx, sourcePath, wanted, withJournal)) {
-                throw DbOpenException("无法读取源文件（是否已授予 root？）")
+                throw DbOpenException(R.string.err_cannot_read_source)
             }
             if (password.isNullOrBlank()) {
                 val db = try {
                     SQLiteDatabase.openDatabase(wanted.absolutePath, null, SQLiteDatabase.OPEN_READWRITE)
                 } catch (t: Throwable) {
-                    throw DbOpenException("无法打开数据库：${t.message ?: "文件可能已加密"}", needPassword = true)
+                    throw DbOpenException(
+                        R.string.err_cannot_open_db,
+                        t.message ?: ctx.getString(R.string.err_file_maybe_encrypted),
+                        needPassword = true,
+                    )
                 }
                 val handle = PlainHandle(db)
                 try {
                     handle.rawQuery("SELECT count(*) FROM sqlite_master", null).use { it.moveToFirst() }
                 } catch (t: Throwable) {
                     handle.close()
-                    throw DbOpenException("无法读取数据库结构（可能已加密）", needPassword = true)
+                    throw DbOpenException(R.string.err_read_schema_encrypted, needPassword = true)
                 }
-                return DbSession(sourcePath, wanted, handle, false, null)
+                return DbSession(ctx, sourcePath, wanted, handle, false, null)
             }
 
-            if (!nativeLoaded) throw DbOpenException("SQLCipher 引擎加载失败（ABI 不受支持）")
+            if (!nativeLoaded) throw DbOpenException(R.string.err_sqlcipher_load)
             val db = try {
                 net.zetetic.database.sqlcipher.SQLiteDatabase.openDatabase(
                     wanted.absolutePath,
@@ -366,16 +378,16 @@ class DbSession private constructor(
                     null,
                 )
             } catch (t: Throwable) {
-                throw DbOpenException("密钥错误或数据库格式不支持：${t.message ?: ""}")
+                throw DbOpenException(R.string.err_wrong_key_or_format, t.message ?: "")
             }
             val handle = CipherHandle(db)
             try {
                 handle.rawQuery("SELECT count(*) FROM sqlite_master", null).use { it.moveToFirst() }
             } catch (t: Throwable) {
                 handle.close()
-                throw DbOpenException("密钥错误（解密失败）")
+                throw DbOpenException(R.string.err_wrong_key)
             }
-            return DbSession(sourcePath, wanted, handle, true, password)
+            return DbSession(ctx, sourcePath, wanted, handle, true, password)
         }
     }
 }

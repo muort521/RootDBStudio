@@ -33,11 +33,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rootdb.studio.AppController
+import com.rootdb.studio.R
 import com.rootdb.studio.data.BackupStore
 import com.rootdb.studio.root.RootShell
 import top.yukonga.miuix.kmp.basic.Button
@@ -58,7 +60,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 @Composable
 fun HomeScreen(c: AppController) {
     Scaffold(
-        topBar = { SmallTopAppBar(title = "数据库工坊") },
+        topBar = { SmallTopAppBar(title = stringResource(R.string.app_name)) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -68,25 +70,25 @@ fun HomeScreen(c: AppController) {
             item {
                 CardGroup {
                     RowItem(
-                        "所有文件访问权限",
-                        if (c.allFilesGranted) "已授予，可浏览 /storage/emulated/0 下任意文件" else "未授予，内部存储目录可能无法列出",
-                        value = if (c.allFilesGranted) "已授予" else "去授权",
+                        stringResource(R.string.home_all_files),
+                        if (c.allFilesGranted) stringResource(R.string.home_all_files_granted) else stringResource(R.string.home_all_files_missing),
+                        value = if (c.allFilesGranted) stringResource(R.string.home_value_granted) else stringResource(R.string.home_value_go_grant),
                         onClick = { c.requestAllFilesAccess() },
                     )
                     RowItem(
-                        "打开指定路径",
-                        "手动输入 /data/data/... 等路径",
+                        stringResource(R.string.home_open_path),
+                        stringResource(R.string.home_open_path_desc),
                         onClick = { c.showPathInput = true },
                     )
                 }
             }
-            item { SectionTitle("快捷入口") }
+            item { SectionTitle(stringResource(R.string.home_quick_access)) }
             item {
                 CardGroup {
-                    QuickRow(c, "/", "根目录（系统全部文件）", AppIcons.public)
-                    QuickRow(c, "/data/data", "应用私有数据（含各 App 数据库）", AppIcons.storage)
-                    QuickRow(c, "/data/system", "系统设置与账号数据库", Icons.Filled.Settings)
-                    QuickRow(c, "/storage/emulated/0", "内部存储（无需 root）", AppIcons.sd)
+                    QuickRow(c, "/", stringResource(R.string.home_quick_root), AppIcons.public)
+                    QuickRow(c, "/data/data", stringResource(R.string.home_quick_data_data), AppIcons.storage)
+                    QuickRow(c, "/data/system", stringResource(R.string.home_quick_data_system), Icons.Filled.Settings)
+                    QuickRow(c, "/storage/emulated/0", stringResource(R.string.home_quick_internal), AppIcons.sd)
                 }
             }
             item {
@@ -95,14 +97,14 @@ fun HomeScreen(c: AppController) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "最近访问（最多 10 条）",
+                        stringResource(R.string.home_recent),
                         fontSize = 13.sp,
                         color = MiuixTheme.colorScheme.onBackgroundVariant,
                         modifier = Modifier.weight(1f),
                     )
                     if (c.recent.isNotEmpty()) {
                         Text(
-                            "清空",
+                            stringResource(R.string.action_clear),
                             fontSize = 13.sp,
                             color = MiuixTheme.colorScheme.primary,
                             modifier = Modifier
@@ -113,7 +115,7 @@ fun HomeScreen(c: AppController) {
                 }
             }
             if (c.recent.isEmpty()) {
-                item { EmptyHint("还没有浏览记录，可从上方快捷入口或「打开指定路径」开始") }
+                item { EmptyHint(stringResource(R.string.home_recent_empty)) }
             }
             itemsIndexed(c.recent, key = { index, p -> "$p#$index" }) { _, recentPath ->
                 Card(
@@ -124,7 +126,7 @@ fun HomeScreen(c: AppController) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = AppIcons.folder,
-                            contentDescription = "目录",
+                            contentDescription = stringResource(R.string.browser_entry_dir),
                             modifier = Modifier.size(24.dp),
                             tint = MiuixTheme.colorScheme.primary,
                         )
@@ -192,7 +194,7 @@ fun BrowserScreen(c: AppController) {
     }
 
     val dirName = when (c.path) {
-        "/storage/emulated/0" -> "内部存储"
+        "/storage/emulated/0" -> stringResource(R.string.home_dir_internal_storage)
         else -> c.path.substringAfterLast('/').ifBlank { "/" }
     }
 
@@ -203,7 +205,7 @@ fun BrowserScreen(c: AppController) {
                 navigationIcon = { BackIcon { c.backFromBrowser() } },
                 actions = {
                     Text(
-                        "刷新",
+                        stringResource(R.string.action_refresh),
                         fontSize = 15.sp,
                         color = MiuixTheme.colorScheme.primary,
                         modifier = Modifier
@@ -229,7 +231,7 @@ fun BrowserScreen(c: AppController) {
             if (c.path != "/" && c.path.isNotEmpty() && c.path != "/storage/emulated/0") {
                 CardGroup {
                     RowItem(
-                        title = "上一级",
+                        title = stringResource(R.string.browser_parent),
                         subtitle = c.path.substringBeforeLast('/').ifBlank { "/" },
                         showChevron = false,
                         subtitleMaxLines = 1,
@@ -248,16 +250,16 @@ fun BrowserScreen(c: AppController) {
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 if (c.listing) {
-                    item { EmptyHint("正在读取目录…") }
+                    item { EmptyHint(stringResource(R.string.browser_reading)) }
                 }
                 val query = c.searchQuery.trim()
                 val shown = c.visibleEntries
                 if (!c.listing && c.entries.isEmpty()) {
-                    item { EmptyHint("目录为空或权限不足。若为 /data/data，请确认已授予 root。") }
+                    item { EmptyHint(stringResource(R.string.browser_dir_empty)) }
                 }
                 if (!c.listing && c.entries.isNotEmpty() && query.isNotEmpty()) {
-                    item { EmptyHint("匹配「$query」：${shown.size} / ${c.entries.size} 项") }
-                    if (shown.isEmpty()) item { EmptyHint("没有名称包含「$query」的条目") }
+                    item { EmptyHint(stringResource(R.string.browser_search_match, query, shown.size, c.entries.size)) }
+                    if (shown.isEmpty()) item { EmptyHint(stringResource(R.string.browser_search_none, query)) }
                 }
                 itemsIndexed(shown, key = { index, entry -> entry.path + "#" + index }) { _, entry ->
                     val kind = fileKindOf(entry.name, entry.isDir, entry.isLink)
@@ -269,7 +271,7 @@ fun BrowserScreen(c: AppController) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = iconOfKind(kind),
-                                contentDescription = labelOfKind(kind),
+                                contentDescription = stringResource(labelResOfKind(kind)),
                                 modifier = Modifier.size(24.dp),
                                 tint = colorOfKind(kind),
                             )
@@ -278,8 +280,8 @@ fun BrowserScreen(c: AppController) {
                                 Text(entry.name, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(
                                     buildString {
-                                        if (entry.isDir) append("目录") else append(BackupStore.humanSize(entry.size))
-                                        if (entry.isLink) append(" · 链接")
+                                        if (entry.isDir) append(stringResource(R.string.browser_entry_dir)) else append(BackupStore.humanSize(entry.size))
+                                        if (entry.isLink) append(stringResource(R.string.browser_entry_link_suffix))
                                         append(" · ").append(entry.perm)
                                     },
                                     fontSize = 11.sp,
@@ -350,7 +352,7 @@ private fun DirSearchBar(c: AppController) {
             Box(Modifier.weight(1f)) {
                 if (c.searchQuery.isEmpty()) {
                     Text(
-                        "搜索当前目录",
+                        stringResource(R.string.browser_search_hint),
                         fontSize = 14.sp,
                         color = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
@@ -373,7 +375,7 @@ private fun DirSearchBar(c: AppController) {
                 IconButton(onClick = { c.searchQuery = "" }, minWidth = 24.dp, minHeight = 24.dp) {
                     Icon(
                         imageVector = MiuixIcons.Basic.SearchCleanup,
-                        contentDescription = "清空搜索",
+                        contentDescription = stringResource(R.string.content_desc_clear_search),
                         modifier = Modifier.size(18.dp),
                         tint = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
@@ -399,7 +401,7 @@ private fun RootCard(c: AppController) {
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(if (c.rooted) "Root 已就绪" else "Root 未授权", fontSize = 16.sp)
+                Text(stringResource(if (c.rooted) R.string.home_root_ready else R.string.home_root_not_granted), fontSize = 16.sp)
                 Text(
                     c.rootText,
                     fontSize = 12.sp,
@@ -409,7 +411,7 @@ private fun RootCard(c: AppController) {
             }
             if (!c.rooted) {
                 Spacer(Modifier.width(8.dp))
-                Button(onClick = { c.retryRoot() }) { Text("检查") }
+                Button(onClick = { c.retryRoot() }) { Text(stringResource(R.string.home_check)) }
             }
         }
     }

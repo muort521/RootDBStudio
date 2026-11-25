@@ -45,11 +45,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rootdb.studio.AppController
+import com.rootdb.studio.R
 import com.rootdb.studio.Screen
 import com.rootdb.studio.data.BackupStore
 import com.rootdb.studio.data.CryptoEngine
@@ -75,7 +77,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 @Composable
 fun DbScreen(c: AppController) {
     val s = c.session
-    val name = s?.sourcePath?.substringAfterLast('/') ?: "数据库"
+    val name = s?.sourcePath?.substringAfterLast('/') ?: stringResource(R.string.db_title)
     val inTable = c.screen is Screen.Table
     Scaffold(
         topBar = {
@@ -88,7 +90,7 @@ fun DbScreen(c: AppController) {
                 },
                 actions = {
                     Text(
-                        if (c.session?.dirty == true) "未写回" else "已同步",
+                        if (c.session?.dirty == true) stringResource(R.string.db_status_dirty) else stringResource(R.string.db_status_synced),
                         fontSize = 13.sp,
                         color = MiuixTheme.colorScheme.onBackgroundVariant,
                         modifier = Modifier.padding(horizontal = 8.dp),
@@ -131,10 +133,10 @@ private fun DbHomeBody(c: AppController, padding: PaddingValues) {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Chip("数据表", c.tab == 0) { c.tab = 0 }
-            Chip("实时监控", c.tab == 1) { c.tab = 1 }
-            Chip("备份恢复", c.tab == 2) { c.tab = 2 }
-            Chip("历史记录", c.tab == 3) { c.tab = 3 }
+            Chip(stringResource(R.string.db_tab_tables), c.tab == 0) { c.tab = 0 }
+            Chip(stringResource(R.string.db_tab_monitor), c.tab == 1) { c.tab = 1 }
+            Chip(stringResource(R.string.db_tab_backup), c.tab == 2) { c.tab = 2 }
+            Chip(stringResource(R.string.db_tab_history), c.tab == 3) { c.tab = 3 }
         }
         when (c.tab) {
             1 -> MonitorTab(c)
@@ -154,12 +156,12 @@ private fun TablesTab(c: AppController) {
     ) {
         item {
             CardGroup {
-                RowItem("源文件", s.sourcePath, showChevron = false)
-                RowItem("加密方式", if (s.encrypted) "SQLCipher（已解密）" else "SQLite 明文", showChevron = false)
-                RowItem("表 / 视图", "${c.tables.size} 个", showChevron = false)
+                RowItem(stringResource(R.string.db_source_file), s.sourcePath, showChevron = false)
+                RowItem(stringResource(R.string.db_encryption), stringResource(if (s.encrypted) R.string.db_enc_sqlcipher else R.string.db_enc_plain), showChevron = false)
+                RowItem(stringResource(R.string.db_tables_views), stringResource(R.string.db_count_items, c.tables.size), showChevron = false)
             }
         }
-        item { SectionTitle("数据表") }
+        item { SectionTitle(stringResource(R.string.db_section_tables)) }
         items(c.tables, key = { it.name }) { t ->
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
@@ -170,7 +172,7 @@ private fun TablesTab(c: AppController) {
                     Column(Modifier.weight(1f)) {
                         Text(t.name, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            if (t.type == "view") "视图" else "表",
+                            if (t.type == "view") stringResource(R.string.db_type_view) else stringResource(R.string.db_type_table),
                             fontSize = 11.sp,
                             color = MiuixTheme.colorScheme.onBackgroundVariant,
                         )
@@ -179,7 +181,7 @@ private fun TablesTab(c: AppController) {
                 }
             }
         }
-        if (c.tables.isEmpty()) item { EmptyHint("没有可访问的表") }
+        if (c.tables.isEmpty()) item { EmptyHint(stringResource(R.string.db_no_tables)) }
     }
 }
 
@@ -199,7 +201,7 @@ private fun MonitorTab(c: AppController) {
             insideMargin = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
             onClick = null,
         ) {
-            Text("实时监控", fontSize = 15.sp)
+            Text(stringResource(R.string.monitor_title), fontSize = 15.sp)
             Spacer(Modifier.height(8.dp))
             Text(
                 c.monitorText,
@@ -210,14 +212,14 @@ private fun MonitorTab(c: AppController) {
         }
         CardGroup {
             RowItem(
-                "采样间隔",
-                "1.5 秒（轮询主库、WAL、SHM 的大小与修改时间）",
+                stringResource(R.string.monitor_interval_title),
+                stringResource(R.string.monitor_interval_desc),
                 showChevron = false,
                 subtitleMaxLines = 2,
             )
             RowItem(
-                "说明",
-                "检测到外部修改时，可通过“备份恢复”回滚，或重新打开数据库载入最新数据",
+                stringResource(R.string.monitor_note_title),
+                stringResource(R.string.monitor_note_desc),
                 showChevron = false,
                 subtitleMaxLines = 4,
             )
@@ -229,8 +231,8 @@ private fun MonitorTab(c: AppController) {
 private fun BackupTab(c: AppController) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { c.createBackup() }) { Text("新建备份") }
-            Button(onClick = { c.exportDb() }) { Text("导出到下载") }
+            Button(onClick = { c.createBackup() }) { Text(stringResource(R.string.backup_new)) }
+            Button(onClick = { c.exportDb() }) { Text(stringResource(R.string.backup_export_downloads)) }
         }
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 28.dp)) {
             items(c.backups, key = { it.absolutePath }) { f ->
@@ -249,16 +251,16 @@ private fun BackupTab(c: AppController) {
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { c.restoreBackup(f) }) { Text("恢复") }
-                        Button(onClick = { c.exportFile(f) }) { Text("导出") }
+                        Button(onClick = { c.restoreBackup(f) }) { Text(stringResource(R.string.action_restore)) }
+                        Button(onClick = { c.exportFile(f) }) { Text(stringResource(R.string.action_export)) }
                         Button(onClick = {
                             BackupStore.delete(f)
                             c.refreshBackups()
-                        }) { Text("删除") }
+                        }) { Text(stringResource(R.string.action_delete)) }
                     }
                 }
             }
-            if (c.backups.isEmpty()) item { EmptyHint("暂无备份") }
+            if (c.backups.isEmpty()) item { EmptyHint(stringResource(R.string.backup_empty)) }
         }
     }
 }
@@ -269,7 +271,7 @@ private fun HistoryTab(c: AppController) {
         item {
             CardGroup {
                 RowItem(
-                    "清空历史", "仅清空记录，不影响数据库内容",
+                    stringResource(R.string.history_clear), stringResource(R.string.history_clear_desc),
                     onClick = {
                         com.rootdb.studio.data.HistoryStore.clear(c.ctx)
                         c.refreshHistory()
@@ -307,12 +309,12 @@ private fun HistoryTab(c: AppController) {
                         }
                     }
                     if (e.op == "UPDATE" && e.rowid != null) {
-                        Button(onClick = { c.undo(e) }) { Text("撤销") }
+                        Button(onClick = { c.undo(e) }) { Text(stringResource(R.string.action_undo)) }
                     }
                 }
             }
         }
-        if (c.history.isEmpty()) item { EmptyHint("暂无操作记录") }
+        if (c.history.isEmpty()) item { EmptyHint(stringResource(R.string.history_empty)) }
     }
 }
 
@@ -334,14 +336,14 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Chip("新增行", false) { showInsert = true }
-            Chip("SQL", false) { showSql = true }
-            Chip("加密设置", false) { showCrypto = true }
-            Chip(if (c.revealPlain) "解密显示：开" else "解密显示：关", c.revealPlain) {
+            Chip(stringResource(R.string.table_insert_row), false) { showInsert = true }
+            Chip(stringResource(R.string.table_sql), false) { showSql = true }
+            Chip(stringResource(R.string.table_crypto), false) { showCrypto = true }
+            Chip(stringResource(if (c.revealPlain) R.string.table_reveal_on else R.string.table_reveal_off), c.revealPlain) {
                 c.revealPlain = !c.revealPlain
             }
-            Chip("写回原库", false) { c.writeBack() }
-            Chip("备份", false) { c.createBackup() }
+            Chip(stringResource(R.string.table_write_back), false) { c.writeBack() }
+            Chip(stringResource(R.string.table_backup), false) { c.createBackup() }
         }
 
         TableSearchBar(
@@ -396,7 +398,7 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                                     else MiuixTheme.colorScheme.onBackground,
                                     onClick = {
                                         if (row.rowid == null) {
-                                            c.toast("该表无 rowid（WITHOUT ROWID），请用 SQL 编辑")
+                                            c.toast(c.ctx.getString(R.string.table_no_rowid))
                                         } else {
                                             editing = row to colName
                                         }
@@ -409,7 +411,7 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
                                 .background(gridColor),
                         )
                     }
-                    if (c.rows.isEmpty()) item { EmptyHint("该表没有数据或当前页为空") }
+                    if (c.rows.isEmpty()) item { EmptyHint(stringResource(R.string.table_empty)) }
                 }
             }
             val maxScroll = hs.maxValue
@@ -462,13 +464,13 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Button(onClick = { c.prevPage() }, enabled = c.pageIndex > 0) { Text("上一页") }
+            Button(onClick = { c.prevPage() }, enabled = c.pageIndex > 0) { Text(stringResource(R.string.table_prev_page)) }
             Text(
-                "第 ${c.pageIndex + 1} 页 / ${c.total ?: "?"} 行",
+                stringResource(R.string.table_page_info, c.pageIndex + 1, c.total?.toString() ?: stringResource(R.string.unknown)),
                 fontSize = 12.sp,
                 color = MiuixTheme.colorScheme.onBackgroundVariant,
             )
-            Button(onClick = { c.nextPage() }) { Text("下一页") }
+            Button(onClick = { c.nextPage() }) { Text(stringResource(R.string.table_next_page)) }
         }
     }
 
@@ -493,9 +495,9 @@ private fun TableBody(c: AppController, table: String, padding: PaddingValues) {
 
     deleteTarget?.let { row ->
         ConfirmDialog(
-            title = "删除记录",
-            summary = "将删除 rowid=${row.rowid}，可先在“备份”中留档。",
-            confirmText = "删除",
+            title = stringResource(R.string.table_delete_title),
+            summary = stringResource(R.string.table_delete_summary, row.rowid ?: -1L),
+            confirmText = stringResource(R.string.action_delete),
             onConfirm = {
                 row.rowid?.let { c.deleteRow(it) }
                 deleteTarget = null
@@ -560,7 +562,7 @@ private fun TableSearchBar(query: String, matched: Long?, onSearch: (String) -> 
             Box(Modifier.weight(1f)) {
                 if (text.isEmpty()) {
                     Text(
-                        "在整个表中搜索（所有列模糊匹配）",
+                        stringResource(R.string.table_search_hint),
                         fontSize = 13.sp,
                         color = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
@@ -579,6 +581,14 @@ private fun TableSearchBar(query: String, matched: Long?, onSearch: (String) -> 
                     keyboardActions = KeyboardActions(onSearch = { onSearch(text) }),
                 )
             }
+            if (query.isNotEmpty() && matched != null) {
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.table_matched_rows, matched),
+                    fontSize = 11.sp,
+                    color = MiuixTheme.colorScheme.onBackgroundVariant,
+                )
+            }
             if (text.isNotEmpty()) {
                 Spacer(Modifier.width(6.dp))
                 IconButton(
@@ -588,17 +598,11 @@ private fun TableSearchBar(query: String, matched: Long?, onSearch: (String) -> 
                 ) {
                     Icon(
                         imageVector = MiuixIcons.Basic.SearchCleanup,
-                        contentDescription = "清空搜索",
+                        contentDescription = stringResource(R.string.search_clear),
                         modifier = Modifier.size(16.dp),
                         tint = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
                 }
-            } else if (query.isNotEmpty() && matched != null) {
-                Text(
-                    "$matched 行",
-                    fontSize = 11.sp,
-                    color = MiuixTheme.colorScheme.onBackgroundVariant,
-                )
             }
         }
     }

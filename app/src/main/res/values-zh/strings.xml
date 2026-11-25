@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 简体中文。键与 values/strings.xml 完全对应；新增语言请复制 values/strings.xml 后翻译。 -->
+<resources>
+    <string name="app_name">数据库工坊</string>
+
+    <!-- 通用 -->
+    <string name="action_ok">确定</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_confirm">确认</string>
+    <string name="action_open">打开</string>
+    <string name="action_browse">浏览</string>
+    <string name="action_save">保存</string>
+    <string name="action_close">关闭</string>
+    <string name="action_run">执行</string>
+    <string name="action_insert">插入</string>
+    <string name="action_clear">清空</string>
+    <string name="action_refresh">刷新</string>
+    <string name="action_delete">删除</string>
+    <string name="action_restore">恢复</string>
+    <string name="action_export">导出</string>
+    <string name="action_undo">撤销</string>
+    <string name="content_desc_back">返回</string>
+    <string name="content_desc_clear_search">清空搜索</string>
+    <string name="unknown">?</string>
+
+    <!-- 首页 -->
+    <string name="home_root_ready">Root 已就绪</string>
+    <string name="home_root_not_granted">Root 未授权</string>
+    <string name="home_check">检查</string>
+    <string name="root_detecting">正在检测 root 权限…</string>
+    <string name="root_rechecking">正在重新检测 root 权限…</string>
+    <string name="root_ok_desc">可读写 /data/data 等受保护目录</string>
+    <string name="root_no_desc">仅可浏览内部存储；受保护目录需 root</string>
+    <string name="home_all_files">所有文件访问权限</string>
+    <string name="home_all_files_granted">已授予，可浏览 /storage/emulated/0 下任意文件</string>
+    <string name="home_all_files_missing">未授予，内部存储目录可能无法列出</string>
+    <string name="home_value_granted">已授予</string>
+    <string name="home_value_go_grant">去授权</string>
+    <string name="home_open_path">打开指定路径</string>
+    <string name="home_open_path_desc">手动输入 /data/data/… 等路径</string>
+    <string name="home_quick_access">快捷入口</string>
+    <string name="home_quick_root">根目录（系统全部文件）</string>
+    <string name="home_quick_data_data">应用私有数据（含各 App 数据库）</string>
+    <string name="home_quick_data_system">系统设置与账号数据库</string>
+    <string name="home_quick_internal">内部存储（无需 root）</string>
+    <string name="home_recent">最近访问（最多 10 条）</string>
+    <string name="home_recent_empty">还没有浏览记录，可从上方快捷入口或「打开指定路径」开始</string>
+    <string name="home_dir_internal_storage">内部存储</string>
+    <string name="err_grant_page">无法打开授权页面，请在系统设置中手动授予“所有文件访问权限”</string>
+
+    <!-- 文件浏览 -->
+    <string name="browser_parent">上一级</string>
+    <string name="browser_reading">正在读取目录…</string>
+    <string name="browser_dir_empty">目录为空或权限不足。若为 /data/data，请确认已授予 root。</string>
+    <string name="browser_search_hint">搜索当前目录</string>
+    <string name="browser_search_match">匹配「%1$s」：%2$d / %3$d 项</string>
+    <string name="browser_search_none">没有名称包含「%1$s」的条目</string>
+    <string name="browser_entry_dir">目录</string>
+    <string name="browser_entry_link_suffix"> · 链接</string>
+    <string name="browser_dir_inaccessible">目录为空或无权访问：%1$s</string>
+
+    <!-- 文件类型 -->
+    <string name="kind_dir">文件夹</string>
+    <string name="kind_db">数据库文件</string>
+    <string name="kind_image">图片</string>
+    <string name="kind_video">视频</string>
+    <string name="kind_audio">音频</string>
+    <string name="kind_playlist">播放列表</string>
+    <string name="kind_subtitle">字幕</string>
+    <string name="kind_archive">压缩包</string>
+    <string name="kind_apk">应用包</string>
+    <string name="kind_binary">二进制文件</string>
+    <string name="kind_code">代码文件</string>
+    <string name="kind_web">网页文件</string>
+    <string name="kind_text">文本文件</string>
+    <string name="kind_pdf">PDF 文档</string>
+    <string name="kind_doc">文档</string>
+    <string name="kind_sheet">表格</string>
+    <string name="kind_slide">演示文稿</string>
+    <string name="kind_font">字体文件</string>
+    <string name="kind_cert">证书或密钥</string>
+    <string name="kind_log">日志文件</string>
+    <string name="kind_other">文件</string>
+
+    <!-- 数据库首页 -->
+    <string name="db_title">数据库</string>
+    <string name="db_status_dirty">未写回</string>
+    <string name="db_status_synced">已同步</string>
+    <string name="db_tab_tables">数据表</string>
+    <string name="db_tab_monitor">实时监控</string>
+    <string name="db_tab_backup">备份恢复</string>
+    <string name="db_tab_history">历史记录</string>
+    <string name="db_source_file">源文件</string>
+    <string name="db_encryption">加密方式</string>
+    <string name="db_enc_sqlcipher">SQLCipher（已解密）</string>
+    <string name="db_enc_plain">SQLite 明文</string>
+    <string name="db_tables_views">表 / 视图</string>
+    <string name="db_count_items">%1$d 个</string>
+    <string name="db_section_tables">数据表</string>
+    <string name="db_type_view">视图</string>
+    <string name="db_type_table">表</string>
+    <string name="db_no_tables">没有可访问的表</string>
+
+    <!-- 实时监控 -->
+    <string name="monitor_title">实时监控</string>
+    <string name="monitor_interval_title">采样间隔</string>
+    <string name="monitor_interval_desc">1.5 秒（轮询主库、WAL、SHM 的大小与修改时间）</string>
+    <string name="monitor_note_title">说明</string>
+    <string name="monitor_note_desc">检测到外部修改时，可通过“备份恢复”回滚，或重新打开数据库载入最新数据</string>
+    <string name="monitor_waiting">等待采样…</string>
+    <string name="monitor_unreadable">  不可读</string>
+    <string name="monitor_working_copy">工作副本：%1$s</string>
+    <string name="monitor_external_changes">检测到外部变更：%1$d 次</string>
+
+    <!-- 备份 -->
+    <string name="backup_new">新建备份</string>
+    <string name="backup_export_downloads">导出到下载</string>
+    <string name="backup_empty">暂无备份</string>
+    <string name="toast_backup_done">备份完成：%1$s</string>
+    <string name="toast_backup_failed">备份失败</string>
+    <string name="toast_restored">已从备份恢复并写回原库</string>
+    <string name="toast_restore_failed">恢复失败：%1$s</string>
+    <string name="err_write_denied">写回被拒绝</string>
+    <string name="toast_exported">已导出到系统下载目录：%1$s</string>
+    <string name="toast_export_failed">导出失败</string>
+    <string name="toast_export_failed_detail">导出失败：%1$s</string>
+
+    <!-- 历史记录 -->
+    <string name="history_clear">清空历史</string>
+    <string name="history_clear_desc">仅清空记录，不影响数据库内容</string>
+    <string name="history_empty">暂无操作记录</string>
+    <string name="toast_undo_unsupported">该记录不支持自动撤销，可用备份恢复</string>
+    <string name="toast_undo_ok">已撤销：%1$s.%2$s 恢复为 %3$s</string>
+    <string name="toast_undo_failed">撤销失败</string>
+    <string name="toast_undo_failed_detail">撤销失败：%1$s</string>
+
+    <!-- 表格 -->
+    <string name="table_insert_row">新增行</string>
+    <string name="table_sql">SQL</string>
+    <string name="table_crypto">加密设置</string>
+    <string name="table_reveal_on">解密显示：开</string>
+    <string name="table_reveal_off">解密显示：关</string>
+    <string name="table_write_back">写回原库</string>
+    <string name="table_backup">备份</string>
+    <string name="table_search_hint">在整个表中搜索（所有列模糊匹配）</string>
+    <string name="table_matched_rows">%1$d 行</string>
+    <string name="table_empty">该表没有数据或当前页为空</string>
+    <string name="table_prev_page">上一页</string>
+    <string name="table_next_page">下一页</string>
+    <string name="table_page_info">第 %1$d 页 / %2$s 行</string>
+    <string name="table_no_rowid">该表无 rowid（WITHOUT ROWID），请用 SQL 编辑</string>
+    <string name="table_delete_title">删除记录</string>
+    <string name="table_delete_summary">将删除 rowid=%1$d，可先在“备份”中留档。</string>
+    <string name="toast_read_table_failed">读取表失败：%1$s</string>
+    <string name="toast_updated">已更新 %1$s</string>
+    <string name="toast_update_row_missing">更新失败：未找到目标行</string>
+    <string name="toast_update_failed">更新失败：%1$s</string>
+    <string name="toast_deleted">已删除 rowid=%1$d</string>
+    <string name="toast_delete_failed">删除失败</string>
+    <string name="toast_delete_failed_detail">删除失败：%1$s</string>
+    <string name="toast_inserted">已插入 rowid=%1$d</string>
+    <string name="toast_insert_failed">插入失败（可能主键冲突或类型不匹配）</string>
+    <string name="toast_insert_failed_detail">插入失败：%1$s</string>
+    <string name="toast_write_back_ok">已写回原文件，原库已备份为 *.dbstudio.bak</string>
+    <string name="toast_write_back_failed">写回失败：%1$s</string>
+    <string name="err_permission_or_locked">权限或文件被占用</string>
+    <string name="err_root_timeout">命令执行超时或被拒绝</string>
+    <string name="err_not_integer">不是合法整数</string>
+    <string name="err_not_real">不是合法小数</string>
+
+    <!-- 搜索 -->
+    <string name="search_clear">清空搜索</string>
+
+    <!-- 打开数据库 -->
+    <string name="toast_opened">已打开：%1$s</string>
+    <string name="toast_opened_decrypted">已解密打开：%1$s</string>
+    <string name="toast_open_failed">打开失败</string>
+    <string name="toast_open_failed_detail">打开失败：%1$s</string>
+    <string name="pwd_error_wrong_key">密钥不正确，无法解密该数据库；也可能这个文件本身不是数据库。</string>
+    <string name="pwd_error_default">打开失败，请检查密钥或文件格式</string>
+    <string name="toast_crypto_saved">加密设置已保存：%1$s</string>
+
+    <!-- 对话框 -->
+    <string name="dialog_open_db_title">打开数据库</string>
+    <string name="dialog_open_db_desc">普通 SQLite 直接打开；SQLCipher 加密库请输入密钥（如微信 EnMicroMsg.db 的 32 位十六进制密钥）。</string>
+    <string name="dialog_sqlcipher_key">SQLCipher 密钥（留空则按明文打开）</string>
+    <string name="dialog_browse_path_title">浏览指定路径</string>
+    <string name="dialog_browse_path_summary">例如 /data/data/com.tencent.mm/databases 或 /sdcard/Download</string>
+    <string name="dialog_absolute_path">绝对路径</string>
+    <string name="dialog_edit_column_title">编辑 %1$s</string>
+    <string name="dialog_edit_column_summary">%1$s · 原值：%2$s</string>
+    <string name="dialog_value">值</string>
+    <string name="edit_kind_auto">自动</string>
+    <string name="edit_kind_text">文本</string>
+    <string name="edit_kind_integer">整数</string>
+    <string name="edit_kind_real">小数</string>
+    <string name="edit_kind_blob">BLOB</string>
+    <string name="edit_kind_null">NULL</string>
+    <string name="edit_kind_auto_full">自动（沿用原类型）</string>
+    <string name="edit_kind_text_full">文本 TEXT</string>
+    <string name="edit_kind_integer_full">整数 INTEGER</string>
+    <string name="edit_kind_real_full">小数 REAL</string>
+    <string name="edit_kind_blob_full">BLOB（十六进制）</string>
+    <string name="dialog_crypto_summary">加密：%1$s</string>
+    <string name="dialog_crypto_keep_cipher">按密文原样保存</string>
+    <string name="dialog_crypto_encrypt_on_save">保存时加密</string>
+    <string name="dialog_crypto_preview">解密预览</string>
+    <string name="dialog_crypto_preview_failed">未能解出可读明文（该值可能未按当前算法加密）</string>
+    <string name="dialog_crypto_not_configured">未配置解密算法。可在表页“加密设置”里选择 AES / 3DES / XOR / Base64 等，支持直接编辑加密字段。</string>
+    <string name="dialog_delete_row">删除该行</string>
+
+    <string name="crypto_dialog_title">字段解密 / 加密设置</string>
+    <string name="crypto_dialog_summary">用于直接查看与编辑加密存储的记录</string>
+    <string name="crypto_algorithm">算法</string>
+    <string name="crypto_key_label">密钥（AES 支持 16/24/32 字节，其它长度自动 SHA-256 派生）</string>
+    <string name="crypto_iv_label">IV / Nonce（CBC、GCM 需要；留空自动派生）</string>
+    <string name="crypto_payload">密文编码</string>
+    <string name="crypto_selftest">自检</string>
+    <string name="crypto_selftest_ok">自检：database studio → %1$s → %2$s</string>
+    <string name="crypto_selftest_failed">自检失败：%1$s</string>
+    <string name="crypto_save_settings">保存设置</string>
+    <string name="crypto_plain">明文</string>
+
+    <string name="algo_none">不加密（明文）</string>
+    <string name="algo_aes_ecb">AES / ECB / PKCS5</string>
+    <string name="algo_aes_cbc">AES / CBC / PKCS5</string>
+    <string name="algo_aes_gcm">AES / GCM / NoPadding</string>
+    <string name="algo_des_ecb">DES / ECB / PKCS5</string>
+    <string name="algo_des3_ecb">3DES / ECB / PKCS5</string>
+    <string name="algo_base64">Base64 编码</string>
+    <string name="algo_xor">XOR 异或（输出十六进制）</string>
+    <string name="fmt_text">文本</string>
+    <string name="fmt_hex">十六进制</string>
+    <string name="fmt_base64">Base64</string>
+
+    <string name="sql_dialog_title">执行 SQL</string>
+    <string name="sql_dialog_summary">支持查询与读写语句</string>
+    <string name="sql_dialog_label">SQL</string>
+    <string name="sql_result_ok">执行成功</string>
+    <string name="sql_result_rows">共 %1$d 行</string>
+    <string name="sql_result_failed">执行失败：%1$s</string>
+
+    <string name="insert_dialog_title">新增记录</string>
+    <string name="insert_dialog_summary">留空的列将写入 NULL</string>
+    <string name="insert_pk_suffix"> (主键)</string>
+    <string name="insert_need_one_field">至少填写一个字段</string>
+
+    <!-- 数据层错误 -->
+    <string name="err_cannot_read_source">无法读取源文件（是否已授予 root？）</string>
+    <string name="err_cannot_open_db">无法打开数据库：%1$s</string>
+    <string name="err_file_maybe_encrypted">文件可能已加密</string>
+    <string name="err_read_schema_encrypted">无法读取数据库结构（可能已加密）</string>
+    <string name="err_sqlcipher_load">SQLCipher 引擎加载失败（ABI 不受支持）</string>
+    <string name="err_wrong_key_or_format">密钥错误或数据库格式不支持：%1$s</string>
+    <string name="err_wrong_key">密钥错误（解密失败）</string>
+    <string name="err_sql_exec_failed">执行失败：%1$s</string>
+    <string name="err_hex_even">十六进制长度必须为偶数</string>
+    <string name="err_hex_chars">包含非十六进制字符</string>
+    <string name="err_xor_key">XOR 需要密钥</string>
+
+    <color name="ic_launcher_background">#0E4C92</color>
+</resources>

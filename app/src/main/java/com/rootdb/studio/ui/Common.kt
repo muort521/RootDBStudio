@@ -18,9 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rootdb.studio.R
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -54,7 +56,7 @@ fun BackIcon(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             imageVector = MiuixIcons.Basic.ArrowRight,
-            contentDescription = "返回",
+            contentDescription = stringResource(R.string.content_desc_back),
             modifier = Modifier.size(width = 8.dp, height = 13.dp).rotate(180f),
         )
     }
