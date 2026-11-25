@@ -19,7 +19,7 @@ android {
         minSdk = 26
         targetSdk = 37
         // 本地构建用默认值；CI 发布时用 -PversionName=v2.0.2 -PversionCode=20002 覆盖，避免改文件
-        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 14
+        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 20002
         versionName = providers.gradleProperty("versionName").orNull ?: "2.0.2"
     }
 
@@ -52,7 +52,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             signingConfig = signingConfigs.getByName("release")
         }
     }

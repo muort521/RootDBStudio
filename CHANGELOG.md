@@ -2,7 +2,7 @@
 
 数据库工坊（`com.rootdb.studio`）版本变更记录。版本号对应 `app/build.gradle.kts` 中的 `versionName` / `versionCode`。
 
-## 2.0.2 — versionCode 14
+## 2.0.2 — versionCode 20002
 
 - 新增 `LICENSE`（MIT），README 重写为中英双语的简洁版（功能、安装、构建、发布、多语言、数据安全）。
 - 新增 GitHub Actions 发布工作流 `.github/workflows/release.yml`：只能手动触发，输入 `v2.0.2` 这样的版本号；Release 只附 APK，源码由 GitHub 自动生成 `Source code (zip)` / `Source code (tar.gz)`。发布前创建 annotated tag（tagger 时间=当前），再用一条 `gh release create` 同时建 Release 并上传 APK，源码包与 APK 时间一致；同版本旧 Release/tag 会先删除重建。
