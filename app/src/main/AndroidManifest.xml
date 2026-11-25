@@ -27,8 +27,101 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- 其他应用（MT 管理器、文件管理器、分享面板）用「打开方式」打开数据库文件 -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/x-sqlite3" />
+                <data android:mimeType="application/vnd.sqlite3" />
+                <data android:mimeType="application/x-sqlite" />
+                <data android:mimeType="application/db" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\.db" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\.sqlite" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\.sqlite3" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\.db3" />
+            </intent-filter>
+
+            <!-- 明确声明常见的无后缀数据库文件名（Chromium/WebView 的 Cookies、Web Data、History、
+                 Login Data 等），让 MT 管理器能把它们设为「默认打开方式」而不是只在 */* 里碰运气 -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies-journal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies-wal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies-shm" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Web Data" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Web Data-journal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*History" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*History-journal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Login Data" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Login Data-journal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Network.Cookies" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*Cookies" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*Web Data" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*History" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*Login Data" />
+                <data android:scheme="content" android:host="*" android:mimeType="application/octet-stream" android:pathPattern=".*Cookies" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/x-sqlite3" />
+                <data android:mimeType="application/vnd.sqlite3" />
+                <data android:mimeType="application/x-sqlite" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- 兜底：无后缀名的数据库（如 /app_webview/Default/Cookies、Web Data）拿不到 MIME，
+                     文件管理器/MT 常以 */* 或 application/octet-stream 交给「打开方式」 -->
+                <data android:scheme="content" android:mimeType="*/*" />
+                <data android:scheme="file" android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- MT 等对无后缀文件可能发 content:// 且不带 MIME（type 为空） -->
+                <data android:scheme="content" android:host="*" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- 有些文件管理器给无后缀文件发 file:// 且不带 MIME（type 为空）。
+                     这里只对已知的无后缀库文件名放行，避免把任意无类型文件也抢过来 -->
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Cookies-journal" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Web Data" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*History" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Login Data" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*Network.Cookies" />
+            </intent-filter>
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\.db" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\.sqlite" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\.sqlite3" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\.db3" />
+            </intent-filter>
         </activity>
 
     </application>
 
 </manifest>
+
+

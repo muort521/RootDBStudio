@@ -159,7 +159,7 @@ private fun TablesTab(c: AppController) {
     ) {
         item {
             CardGroup {
-                RowItem(stringResource(R.string.db_source_file), s.sourcePath, showChevron = false)
+                RowItem(stringResource(R.string.db_source_file), c.sourceLabel(s.sourcePath), showChevron = false)
                 RowItem(stringResource(R.string.db_encryption), stringResource(if (s.encrypted) R.string.db_enc_sqlcipher else R.string.db_enc_plain), showChevron = false)
                 RowItem(stringResource(R.string.db_tables_views), stringResource(R.string.db_count_items, c.tables.size), showChevron = false)
             }

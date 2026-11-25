@@ -1,6 +1,8 @@
 package com.rootdb.studio
 
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -454,8 +456,115 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
         else -> ctx.getString(e.resId)
     }
 
+    /** 从其他应用打开时：本地副本路径 -> 来源 Uri（用于「写回原库」后再同步回来源应用） */
+    private val importedUris = java.util.concurrent.ConcurrentHashMap<String, Uri>()
+
+    /** 导入副本对应的原始文件名，用于界面显示「来自其他应用」而不是缓存路径 */
+    private val importedLabels = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    fun sourceLabel(path: String): String = importedLabels[path] ?: path
+
+    /**
+     * 处理其他应用（MT 管理器、文件管理器、分享面板）送来的 Uri。
+     * file:// 直接按路径打开；content:// 先复制到应用缓存副本，再走正常的打开流程，
+     * 这样不依赖外部 provider 在编辑期间持续授权读，也能正常被 Root 权限的 SQLCipher 打开。
+     */
+    fun openFromUri(uri: Uri) {
+        when (uri.scheme?.lowercase()) {
+            "file" -> {
+                val path = uri.path
+                if (path.isNullOrBlank()) {
+                    toast(ctx.getString(R.string.toast_import_failed))
+                } else {
+                    openDb(path, null)
+                }
+            }
+
+            else -> importAndOpen(uri)
+        }
+    }
+
+    private fun importAndOpen(uri: Uri) {
+        scope.launch(Dispatchers.IO) {
+            val rawName = importDisplayName(uri).orEmpty()
+            val safeName = rawName.replace(Regex("[\\\\/:*?\"<>|\\s]"), "_")
+                .ifBlank { "imported_${System.currentTimeMillis()}.db" }
+            // 能拿到真实路径就直接开原文件（有 Root，读写都不受 provider 授权限制），
+            // 这样「写回原库」就是写回用户真正选中的那个文件，而不是临时副本。
+            val realPath = importRealPath(uri)
+            if (realPath != null) {
+                withContext(Dispatchers.Main) {
+                    toast(
+                        ctx.getString(
+                            R.string.toast_open_from_app,
+                            safeName
+                        )
+                    )
+                    openDb(realPath, null)
+                }
+                return@launch
+            }
+            val dir = File(ctx.cacheDir, "imported").apply { mkdirs() }
+            val target = File(dir, safeName)
+            val ok = runCatching {
+                ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    target.outputStream().use { input.copyTo(it) }
+                } != null && target.length() > 0
+            }.getOrDefault(false)
+            withContext(Dispatchers.Main) {
+                if (!ok) {
+                    runCatching { target.delete() }
+                    toast(ctx.getString(R.string.toast_import_failed))
+                    return@withContext
+                }
+                importedUris[target.absolutePath] = uri
+                importedLabels[target.absolutePath] = ctx.getString(R.string.db_source_imported, safeName)
+                toast(ctx.getString(R.string.toast_import_opened, safeName))
+                openDb(target.absolutePath, null)
+            }
+        }
+    }
+
+    private fun importDisplayName(uri: Uri): String? = runCatching {
+        when (uri.scheme?.lowercase()) {
+            "file" -> uri.lastPathSegment
+            else -> ctx.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { c -> if (c.moveToFirst() && !c.isNull(0)) c.getString(0) else null }
+        }
+    }.getOrNull()
+
+    /** 部分 provider（MediaStore、部分文件管理器）能查到底层真实路径，能用就优先开原文件 */
+    private fun importRealPath(uri: Uri): String? = runCatching {
+        val cursor = ctx.contentResolver.query(
+            uri,
+            arrayOf(android.provider.MediaStore.MediaColumns.DATA),
+            null,
+            null,
+            null,
+        ) ?: return@runCatching null
+        cursor.use { c ->
+            if (!c.moveToFirst() || c.isNull(0)) return@use null
+            val p = c.getString(0)
+            if (p.startsWith("/") && RootShell.isRegularFile(p)) p else null
+        }
+    }.getOrNull()
+
+    /** 把编辑后的文件写回来源应用；provider 不支持写入时返回 false，不影响本地副本已写回 */
+    private fun pushBackToSource(uri: Uri, file: File): Boolean = runCatching {
+        val opened = ctx.contentResolver.openOutputStream(uri, "wt")
+            ?: ctx.contentResolver.openOutputStream(uri)
+            ?: return@runCatching false
+        opened.use { out -> file.inputStream().use { it.copyTo(out) } }
+        true
+    }.getOrDefault(false)
+
     fun closeDb() {
         scope.launch(Dispatchers.IO) { session?.close() }
+        // 从其他应用导入的临时副本，关闭时清掉，避免在缓存里长期留着明文库
+        session?.sourcePath?.let { p ->
+            if (importedUris.remove(p) != null) runCatching { File(p).delete() }
+            importedLabels.remove(p)
+        }
         session = null
         tables = emptyList()
         rows = emptyList()
@@ -641,7 +750,13 @@ class AppController(val ctx: Context, val scope: CoroutineScope) {
             }
             withContext(Dispatchers.Main) {
                 if (ok) {
-                    toast(ctx.getString(R.string.toast_write_back_ok))
+                    val sourceUri = importedUris[s.sourcePath]
+                    val pushed = if (sourceUri != null) pushBackToSource(sourceUri, File(s.sourcePath)) else false
+                    when {
+                        sourceUri == null -> toast(ctx.getString(R.string.toast_write_back_ok))
+                        pushed -> toast(ctx.getString(R.string.toast_write_back_to_source, s.sourcePath.substringAfterLast('/')))
+                        else -> toast(ctx.getString(R.string.toast_write_back_source_failed))
+                    }
                     HistoryStore.add(ctx, s.sourcePath.substringAfterLast('/'), "", "WRITE_BACK", "", null, null, null)
                     refreshHistory()
                     // 重新载入，继续编辑

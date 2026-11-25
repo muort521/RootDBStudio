@@ -95,6 +95,7 @@
     <string name="db_tab_backup">Backups</string>
     <string name="db_tab_history">History</string>
     <string name="db_source_file">Source file</string>
+    <string name="db_source_imported">%1$s (from another app)</string>
     <string name="db_encryption">Encryption</string>
     <string name="db_enc_sqlcipher">SQLCipher (decrypted)</string>
     <string name="db_enc_plain">Plain SQLite</string>
@@ -166,6 +167,11 @@
     <string name="toast_insert_failed">Insert failed (primary key conflict or type mismatch?)</string>
     <string name="toast_insert_failed_detail">Insert failed: %1$s</string>
     <string name="toast_write_back_ok">Written back to the original file; the original was backed up as *.dbstudio.bak</string>
+    <string name="toast_import_opened">Imported “%1$s” from another app; tap “Write back” to save changes to the source file</string>
+    <string name="toast_import_failed">Can\'t read this file. Make sure the source app granted read access.</string>
+    <string name="toast_open_from_app">Opened “%1$s” from another app</string>
+    <string name="toast_write_back_to_source">Written back and synced to the source file: %1$s</string>
+    <string name="toast_write_back_source_failed">Written back to the local copy, but the source file couldn\'t be updated. Use “Export” to save a copy.</string>
     <string name="toast_write_back_failed">Write-back failed: %1$s</string>
     <string name="err_permission_or_locked">permission denied or file in use</string>
     <string name="err_root_timeout">command timed out or denied</string>
@@ -319,5 +325,9 @@
 
     <color name="ic_launcher_background">#0E4C92</color>
 </resources>
+
+
+
+
 
 

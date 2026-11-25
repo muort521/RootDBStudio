@@ -91,6 +91,7 @@
     <string name="db_tab_backup">备份恢复</string>
     <string name="db_tab_history">历史记录</string>
     <string name="db_source_file">源文件</string>
+    <string name="db_source_imported">%1$s（来自其他应用）</string>
     <string name="db_encryption">加密方式</string>
     <string name="db_enc_sqlcipher">SQLCipher（已解密）</string>
     <string name="db_enc_plain">SQLite 明文</string>
@@ -162,6 +163,11 @@
     <string name="toast_insert_failed">插入失败（可能主键冲突或类型不匹配）</string>
     <string name="toast_insert_failed_detail">插入失败：%1$s</string>
     <string name="toast_write_back_ok">已写回原文件，原库已备份为 *.dbstudio.bak</string>
+    <string name="toast_import_opened">已从其他应用导入「%1$s」，编辑后点「写回原库」可保存回来源文件</string>
+    <string name="toast_import_failed">无法读取这个文件，请检查来源应用是否授予了读取权限</string>
+    <string name="toast_open_from_app">已从其他应用打开「%1$s」</string>
+    <string name="toast_write_back_to_source">已写回并同步到来源文件：%1$s</string>
+    <string name="toast_write_back_source_failed">已写回本地副本，但无法写回来源文件，请用「导出」另存</string>
     <string name="toast_write_back_failed">写回失败：%1$s</string>
     <string name="err_permission_or_locked">权限或文件被占用</string>
     <string name="err_root_timeout">命令执行超时或被拒绝</string>
@@ -315,6 +321,9 @@
 
     <color name="ic_launcher_background">#0E4C92</color>
 </resources>
+
+
+
 
 
 

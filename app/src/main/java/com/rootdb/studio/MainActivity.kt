@@ -1,5 +1,6 @@
 package com.rootdb.studio
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -38,6 +39,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pendingOpenPath.value = intent?.getStringExtra(EXTRA_OPEN_PATH)
+        // 只在首次创建时消费外部打开请求，避免重建（如旋转）时重复打开
+        if (savedInstanceState == null) pendingOpenUri.value = openUriOf(intent)
         setContent { RootDbApp() }
     }
 
@@ -50,15 +53,32 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingOpenPath.value = intent.getStringExtra(EXTRA_OPEN_PATH)
+        pendingOpenUri.value = openUriOf(intent)
     }
 
     companion object {
         const val EXTRA_OPEN_PATH = "openPath"
+
+        /** 从 VIEW / SEND intent 里取出要打开的数据库 Uri */
+        fun openUriOf(intent: android.content.Intent?): Uri? {
+            if (intent == null) return null
+            return when (intent.action) {
+                android.content.Intent.ACTION_VIEW -> intent.data
+                android.content.Intent.ACTION_SEND -> {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra<Uri>(android.content.Intent.EXTRA_STREAM)
+                }
+                else -> null
+            }
+        }
     }
 }
 
 /** 由 intent 传入、待 UI 消费一次的目标数据库路径 */
 private val pendingOpenPath = mutableStateOf<String?>(null)
+
+/** 由其他应用「打开方式」传入、待 UI 消费一次的目标 Uri */
+private val pendingOpenUri = mutableStateOf<Uri?>(null)
 
 /** 每次 onResume 自增，供 Compose 侧感知「回到应用」 */
 private val appResumeTick = mutableStateOf(0)
@@ -78,6 +98,15 @@ private fun RootDbApp() {
         if (target.isNotEmpty()) {
             pendingOpenPath.value = null
             c.openDb(target, null)
+        }
+    }
+
+    // 其他应用「打开方式 / 分享」送来的数据库文件
+    val openUri = pendingOpenUri.value
+    LaunchedEffect(openUri) {
+        if (openUri != null) {
+            pendingOpenUri.value = null
+            c.openFromUri(openUri)
         }
     }
 

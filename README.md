@@ -20,6 +20,7 @@ A root-powered SQLite / SQLCipher browser and editor for Android, built with Jet
 - Decrypt and edit fields with AES (ECB/CBC/CTR/CFB/OFB/GCM), DES (ECB/CBC), 3DES (ECB/CBC), Blowfish, ChaCha20 / ChaCha20-Poly1305, SM4, RSA (PKCS#1 v1.5 / OAEP-SHA256), XOR and Base64; keys and modes are remembered per database and table
 - Open SQLCipher 4 databases and legacy SQLCipher 3.x databases (automatic `cipher_compatibility=3` fallback)
 - Encryption & Keys page: manage saved per-table field profiles (edit, delete, clear) and whole-database passwords (edit in place, delete, clear); passwords are encrypted with the Android Keystore so an encrypted database reopens without retyping; editing a cell while decryption is on shows plaintext and re-encrypts it on save
+- Open `.db/.sqlite/.sqlite3/.db3` from other apps (MT Manager's “Open with”, file managers, share sheet) and edit the original file directly, then write back
 - Live monitor, backups (create / export / restore / delete), undoable history
 - Every edit lands on a working copy; "Write back" leaves a `*.dbstudio.bak` next to the source
 
