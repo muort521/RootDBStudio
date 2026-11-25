@@ -156,10 +156,31 @@ jobs:
 
           # 3) 等 GitHub 索引 tag，再用一条 gh release create 同时建 Release 并上传 APK，
           #    让 APK 的 created_at 与 tag 时间落在同一时刻。
+          #    GitHub 偶发 502/5xx：带退避重试；若 Release 其实已建好、只是附件没传上，
+          #    改用 gh release upload --clobber 补齐，避免整条流水线白跑。
           sleep 5
-          gh release create "$V" "$APK_NAME" \
-            --title "RootDB Studio $V" \
-            --notes-file notes.md
+          ok=0
+          for i in 1 2 3 4 5; do
+            if gh release create "$V" "$APK_NAME" \
+                 --title "RootDB Studio $V" \
+                 --notes-file notes.md; then
+              ok=1
+              break
+            fi
+            echo "::warning::gh release create 第 $i 次失败（GitHub API 可能 502），$((i * 10))s 后重试"
+            sleep $((i * 10))
+            if gh release view "$V" >/dev/null 2>&1; then
+              echo "Release $V 已存在，尝试补传附件"
+              if gh release upload "$V" "$APK_NAME" --clobber; then
+                ok=1
+                break
+              fi
+            fi
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::创建 Release $V 失败：GitHub API 持续不可用，tag 已推送。稍后在 Actions 里 Re-run failed jobs 即可，脚本会先清理旧 Release/tag 再重发。"
+            exit 1
+          fi
 
           ASSETS="$(gh release view "$V" --json assets -q '.assets[].name')"
           echo "Release 附件：$ASSETS"
